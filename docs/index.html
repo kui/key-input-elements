@@ -3,6 +3,8 @@
 
 <title>&lt;keydown-input&gt;/&lt;keyup-input&gt; examples</title>
 
+<script src="CustomElements.min.js"></script>
+
 <style>
   code {
     background-color: #eee;
@@ -39,7 +41,9 @@
 </ul>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  window.addEventListener("load", () => {
+    console.log("Setting up 'matching event' example");
+
     const configElement = document.getElementById("keydown-config");
     const displayElement = document.getElementById("result-display");
 

@@ -1,0 +1,49 @@
+{
+  "name": "key-input-elements",
+  "version": "0.0.1",
+  "description": "custom elements to input key press events",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --compilers js:babel-register test",
+    "build": "babel src -d lib",
+    "lint": "eslint .",
+    "fix": "eslint . --fix",
+    "flow": "flow check src && flow check test",
+    "check": "npm run flow && npm run lint",
+    "debug-dist": "webpack",
+    "prod-dist": "NODE_ENV=production webpack",
+    "dist": "npm run debug-dist && npm run prod-dist",
+    "docs": "npm run check && npm run dist && mkdir -vp docs && cp -v dist/* docs",
+    "serve": "webpack-dev-server --output-path docs --content-base docs --open",
+    "clean": "rm -fr lib dist"
+  },
+  "keywords": [
+    "custom elements"
+  ],
+  "author": "Keiichiro Ui",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-cli": "^6.18.0",
+    "babel-eslint": "^6.1.2",
+    "babel-loader": "^6.2.10",
+    "babel-plugin-transform-flow-strip-types": "^6.18.0",
+    "babel-preset-babili": "0.0.9",
+    "babel-preset-env": "^1.1.1",
+    "babel-register": "^6.18.0",
+    "babili-webpack-plugin": "0.0.7",
+    "eslint": "^3.12.2",
+    "eslint-config-babel": "^1.0.2",
+    "eslint-plugin-babel": "^4.0.0",
+    "eslint-plugin-flowtype": "^2.29.1",
+    "flow-bin": "^0.37.0",
+    "flow-typed": "^2.0.0",
+    "mocha": "^3.2.0",
+    "sinon": "^1.17.7",
+    "webpack": "^1.14.0",
+    "webpack-dev-server": "^1.16.2"
+  },
+  "engine": {
+    "node": "^6.x"
+  },
+  "repository": "https://github.com/kui/key-input-elements.git"
+}

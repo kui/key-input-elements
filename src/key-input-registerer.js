@@ -1,3 +1,3 @@
-import ki from "./key-input";
+import * as ki from "./key-input";
 
 ki.register();

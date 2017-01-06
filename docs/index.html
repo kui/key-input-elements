@@ -1,14 +1,48 @@
 <!doctype html>
 <meta charset="utf-8">
 
-<title>&lt;key-input&gt; examples</title>
+<title>&lt;keydown-input&gt;/&lt;keyup-input&gt; examples</title>
 
-<h1><code>&lt;key-input&gt;</code> examples</h1>
+<style>
+  code {
+    background-color: #eee;
+    padding: 3px;
+  }
+</style>
+
+<h1><code>&lt;keydown-input&gt;</code>/<code>&lt;keyup-input&gt;</code> examples</h1>
+
+<h2>Simple Usages</h2>
 
 <ul>
   <li><label>Key down: <input is="keydown-input"></label></li>
   <li><label>Key up: <input is="keyup-input"></label></li>
-  <li><label>Key down (permit only modifire keys): <input is="keydown-input" modkey></label></li>
+  <li><label>Key down (permit only modifire keys): <input is="keydown-input" allow-mod-only></label></li>
+  <li><label>Key down (strip modifires): <input is="keydown-input" no-mod></label></li>
+  <li><label>Key down (ignore <code>Tab</code> and <code>KeyA</code> to <code>KeyD</code>): <input is="keydown-input" ignore="(\+ |^)(Tab|Key[A-D])$"></label></li>
 </ul>
+
+
+<h2>Matching <code>Event</code></h2>
+
+<p><code>key-input</code> element has a method generates a matcher for <code>KeyBoardEvent</code></p>
+
+<ul>
+  <li><label>Display <code>true</code> if you input <code>Shift + KeyD</code>
+    or else display <code>false</code>: <input id="result-display"></label></li>
+  <li><label>Key down (<code>readonly</code>):
+    <input is="keydown-input" id="keydown-config" value="Shift + KeyD" readonly></label></li>
+</ul>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const configElement = document.getElementById("keydown-config");
+    const displayElement = document.getElementById("result-display");
+
+    let eventMatcher = configElement.buildMatcher();
+    displayElement.addEventListener("keydown", (e) => displayElement.value = eventMatcher.test(e));
+    displayElement.addEventListener("keypress", (e) => e.preventDefault());
+  });
+</script>
 
 <script src="key-input-elements-debug.js"></script>

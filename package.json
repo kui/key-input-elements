@@ -2,7 +2,7 @@
   "name": "key-input-elements",
   "version": "0.0.1",
   "description": "custom elements to input key press events",
-  "main": "index.js",
+  "main": "lib/key-input.js",
   "scripts": {
     "test": "mocha --compilers js:babel-register test",
     "build": "babel src -d lib",

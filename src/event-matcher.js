@@ -5,7 +5,17 @@ export interface EventMatcherOptions {
   ignore?: ?RegExp;
 }
 
-const MOD_KEYS = new Set(["Shift", "Alt", "Control", "Meta"]);
+const META_CODES  = new Set(["Meta", "MetaLeft", "MetaRight"]);
+const CTRL_CODES  = new Set(["Control", "ControlLeft", "ControlRight"]);
+const ALT_CODES   = new Set(["Alt", "AltLeft", "AltRight"]);
+const SHIFT_CODES = new Set(["Shift", "ShiftLeft", "ShiftRight"]);
+
+const MOD_CODES = new Set([
+  ...Array.from(META_CODES.values()),
+  ...Array.from(CTRL_CODES.values()),
+  ...Array.from(ALT_CODES.values()),
+  ...Array.from(SHIFT_CODES.values()),
+]);
 
 const DEFAULT_OPTIONS = {
   allowModOnly: false,
@@ -14,34 +24,54 @@ const DEFAULT_OPTIONS = {
 };
 export { DEFAULT_OPTIONS };
 
+declare interface Key {
+  metaKey: boolean;
+  ctrlKey: boolean;
+  altKey: boolean;
+  shiftKey: boolean;
+  code: string;
+}
+
 export default class EventMatcher {
-  pattern: string;
-  options: EventMatcherOptions;
+  key: Key;
 
-  constructor(pattern: string, options?: EventMatcherOptions = DEFAULT_OPTIONS) {
-    this.pattern = pattern;
-    this.options = options;
+  constructor(pattern: string) {
+    this.key = parseValue(pattern);
   }
 
-  test(event: Event) {
-    if (!(event instanceof KeyboardEvent)) return false;
-    if (this.pattern.length === 0) return false;
-    const value = buildValue((event: KeyboardEvent), this.options);
-    return this.pattern === value;
+  test(k: Key): boolean {
+    return k.shiftKey === this.key.shiftKey
+      && k.altKey  === this.key.altKey
+      && k.ctrlKey === this.key.ctrlKey
+      && k.metaKey === this.key.metaKey
+      && this.testModInsensitive(k);
   }
 
-  testModInsensitive(event: Event) {
-    if (!(event instanceof KeyboardEvent)) return false;
-    if (this.pattern.length === 0) return false;
-    const opts = Object.assign(({ noMod: true }: any), this.options);
-    const value = buildValue((event: KeyboardEvent), opts);
-    return this.pattern === value;
+  testModInsensitive(k: Key): boolean {
+    return this.key.code === k.code;
   }
 }
 
-export function buildValue(event: KeyboardEvent, options: EventMatcherOptions): ?string {
-  const code = event.code;
-  if (!options.allowModOnly && isModKey(event.key)) {
+function parseValue(pattern: string): Key {
+  const splitted = pattern.split(" + ");
+  const key = { altKey: false, shiftKey: false, ctrlKey: false, metaKey: false, code: "" };
+  while (splitted.length !== 1) {
+    const m = splitted.shift();
+    switch (m) {
+    case "Meta":  key.metaKey  = true; break;
+    case "Ctrl":  key.ctrlKey  = true; break;
+    case "Alt":   key.altKey   = true; break;
+    case "Shift": key.shiftKey = true; break;
+    default: throw Error(`Unexpected mod: ${m}`);
+    }
+  }
+  key.code = splitted[0];
+  return key;
+}
+
+export function buildValue(key: Key, options: EventMatcherOptions): ?string {
+  const code = key.code;
+  if (!options.allowModOnly && isModKey(key.code)) {
     return null;
   }
 
@@ -50,10 +80,10 @@ export function buildValue(event: KeyboardEvent, options: EventMatcherOptions): 
     value = code;
   } else {
     const a = [code];
-    if (event.shiftKey && !code.startsWith("Shift"))   a.unshift("Shift");
-    if (event.altKey   && !code.startsWith("Alt"))     a.unshift("Alt");
-    if (event.ctrlKey  && !code.startsWith("Control")) a.unshift("Control");
-    if (event.metaKey  && !code.startsWith("Meta"))    a.unshift("Meta");
+    if (key.metaKey  && !isMetaKey(code))  a.unshift("Meta");
+    if (key.ctrlKey  && !isCtrlKey(code))  a.unshift("Ctrl");
+    if (key.altKey   && !isAltKey(code))   a.unshift("Alt");
+    if (key.shiftKey && !isShiftKey(code)) a.unshift("Shift");
     value = a.join(" + ");
   }
 
@@ -64,6 +94,8 @@ export function buildValue(event: KeyboardEvent, options: EventMatcherOptions): 
   return value;
 }
 
-function isModKey(key: string): boolean {
-  return MOD_KEYS.has(key);
-}
+function isModKey(code: string): boolean   { return MOD_CODES.has(code); }
+function isMetaKey(code: string): boolean  { return META_CODES.has(code); }
+function isCtrlKey(code: string): boolean  { return CTRL_CODES.has(code); }
+function isAltKey(code: string): boolean   { return ALT_CODES.has(code); }
+function isShiftKey(code: string): boolean { return SHIFT_CODES.has(code); }

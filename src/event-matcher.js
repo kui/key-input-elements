@@ -29,6 +29,14 @@ export default class EventMatcher {
     const value = buildValue((event: KeyboardEvent), this.options);
     return this.pattern === value;
   }
+
+  testModInsensitive(event: Event) {
+    if (!(event instanceof KeyboardEvent)) return false;
+    if (this.pattern.length === 0) return false;
+    const opts = Object.assign(({ noMod: true }: any), this.options);
+    const value = buildValue((event: KeyboardEvent), opts);
+    return this.pattern === value;
+  }
 }
 
 export function buildValue(event: KeyboardEvent, options: EventMatcherOptions): ?string {

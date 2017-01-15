@@ -30,7 +30,9 @@ function mixinKeyInput<T: HTMLInputElement>(c: Class<T>): Class<T & KeyInput> {
     get value(): string { return super.value; }
     set value(v: string): void {
       super.value = v;
-      this.select();
+      if (document.activeElement === this) {
+        this.select();
+      }
     }
 
     constructor() {

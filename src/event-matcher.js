@@ -11,10 +11,10 @@ const ALT_CODES   = new Set(["Alt", "AltLeft", "AltRight"]);
 const SHIFT_CODES = new Set(["Shift", "ShiftLeft", "ShiftRight"]);
 
 const MOD_CODES = new Set([
-  ...Array.from(META_CODES.values()),
-  ...Array.from(CTRL_CODES.values()),
-  ...Array.from(ALT_CODES.values()),
-  ...Array.from(SHIFT_CODES.values()),
+  ...Array.from(META_CODES),
+  ...Array.from(CTRL_CODES),
+  ...Array.from(ALT_CODES),
+  ...Array.from(SHIFT_CODES),
 ]);
 
 const DEFAULT_OPTIONS = {
@@ -24,7 +24,7 @@ const DEFAULT_OPTIONS = {
 };
 export { DEFAULT_OPTIONS };
 
-declare interface Key {
+export interface Key {
   metaKey: boolean;
   ctrlKey: boolean;
   altKey: boolean;

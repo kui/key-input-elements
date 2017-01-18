@@ -1,3 +1,7 @@
+// @flow
+import EventMatcher, { buildValue, DEFAULT_OPTIONS } from "./event-matcher";
+import type EventMatcherOptions from "./event-matcher";
+
 declare interface KeyInput extends HTMLInputElement {
   allowModOnly: boolean;
   noMod: boolean;
@@ -26,7 +30,9 @@ function mixinKeyInput<T: HTMLInputElement>(c: Class<T>): Class<T & KeyInput> {
     get value(): string { return super.value; }
     set value(v: string): void {
       super.value = v;
-      this.select();
+      if (document.activeElement === this) {
+        this.select();
+      }
     }
 
     constructor() {
@@ -84,6 +90,20 @@ export function mixinKeyupInput<T: HTMLInputElement>(c: Class<T>): Class<T & Key
     createdCallback() {
       super.createdCallback();
       this.addEventListener("keyup", (e: KeyboardEvent) => handleEvent(this, e));
+      this.addEventListener("keydown", (e: KeyboardEvent) => {
+        const ignore = this.ignore;
+        if (!ignore) {
+          e.preventDefault();
+          return;
+        }
+
+        const v = buildValue(e, this);
+        if (v && ignore.test(v)) {
+          return;
+        }
+
+        e.preventDefault();
+      });
     }
   };
 }
@@ -95,37 +115,6 @@ export class KeyupInputElement extends mixinKeyupInput(HTMLInputElement) {
 export function register() {
   document.registerElement("keydown-input", KeydownInputElement);
   document.registerElement("keyup-input", KeyupInputElement);
-}
-
-//
-
-interface EventMatcherOptions {
-  allowModOnly?: boolean;
-  noMod?: boolean;
-  ignore?: ?RegExp;
-}
-
-const DEFAULT_OPTIONS = {
-  allowModOnly: false,
-  noMod: false,
-  ignore: undefined,
-};
-
-class EventMatcher {
-  pattern: string;
-  options: EventMatcherOptions;
-
-  constructor(pattern: string, options?: EventMatcherOptions = DEFAULT_OPTIONS) {
-    this.pattern = pattern;
-    this.options = options;
-  }
-
-  test(event: Event) {
-    if (!(event instanceof KeyboardEvent)) return false;
-    if (this.pattern.length === 0) return false;
-    const value = buildValue((event: KeyboardEvent), this.options);
-    return this.pattern === value;
-  }
 }
 
 //
@@ -145,37 +134,6 @@ function handleEvent(self: KeyInput, event: KeyboardEvent) {
   console.log(event);
   if (v != null) self.value = v;
   if (v) event.preventDefault();
-}
-
-const MOD_KEYS = new Set(["Shift", "Alt", "Control", "Meta"]);
-
-function buildValue(event: KeyboardEvent, options: EventMatcherOptions): ?string {
-  const code = event.code;
-  if (!options.allowModOnly && isModKey(event.key)) {
-    return null;
-  }
-
-  let value;
-  if (options.noMod) {
-    value = code;
-  } else {
-    const a = [code];
-    if (event.shiftKey && !code.startsWith("Shift"))   a.unshift("Shift");
-    if (event.altKey   && !code.startsWith("Alt"))     a.unshift("Alt");
-    if (event.ctrlKey  && !code.startsWith("Control")) a.unshift("Control");
-    if (event.metaKey  && !code.startsWith("Meta"))    a.unshift("Meta");
-    value = a.join(" + ");
-  }
-
-  const ignore = options.ignore;
-  if (ignore && ignore.test(value)) {
-    return null;
-  }
-  return value;
-}
-
-function isModKey(key: string): boolean {
-  return MOD_KEYS.has(key);
 }
 
 function markAttr(self: HTMLElement, name: string, b: boolean): void {

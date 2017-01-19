@@ -16,7 +16,7 @@ module.exports = {
   devtool: DEBUG ? "inline-source-map" : "source-map",
   entry: "./src/key-input-registerer.js",
   output: {
-    path: "./dist",
+    path: "./dist/key-input-elements",
     filename: DEBUG ? "key-input-elements-debug.js" : "key-input-elements.js"
   },
   module: {

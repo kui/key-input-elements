@@ -18,3 +18,25 @@ Put an `keydown-input` element to your HTML.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Then press `D` key, the `keydown-input` displays `KeyD`. And then press `C` key with a shift key, it displays `Shift + KeyD`.
+
+
+Publish to npm
+--------------
+
+```sh
+$ npm run pre-npm-publish
+$ npm publish
+```
+
+Release to github
+-------------------
+
+```sh
+# Create the current version tag
+$ ./version-tag.sh
+
+# Create release draft
+$ ./release-github.sh
+```
+ 
+ Then confirm the draft and release it.

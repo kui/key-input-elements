@@ -1,34 +1,35 @@
-// @flow
 import EventMatcher, { buildValue, DEFAULT_OPTIONS } from "./event-matcher";
-import type EventMatcherOptions from "./event-matcher";
 
-declare interface KeyInput extends HTMLInputElement {
-  allowModOnly: boolean;
-  noMod: boolean;
-  ignore: ?RegExp;
-}
-export interface KeyupInput extends KeyInput {}
-export interface KeydownInput extends KeyInput {}
 
-function mixinKeyInput<T: HTMLInputElement>(c: Class<T>): Class<T & KeyInput> {
+function mixinKeyInput(c) {
   // $FlowFixMe Force cast to returned type
   return class extends c {
-    get allowModOnly(): boolean { return this.hasAttribute("allow-mod-only"); }
-    set allowModOnly(b: boolean): void { markAttr(this, "allow-mod-only", b); }
+    get allowModOnly() {
+      return this.hasAttribute("allow-mod-only");
+    }
+    set allowModOnly(b) {
+      markAttr(this, "allow-mod-only", b);
+    }
 
-    get noMod(): boolean { return this.hasAttribute("no-mod"); }
-    set noMod(b: boolean): void { markAttr(this, "no-mod", b); }
+    get noMod() {
+      return this.hasAttribute("no-mod");
+    }
+    set noMod(b) {
+      markAttr(this, "no-mod", b);
+    }
 
-    get ignore(): ?RegExp {
+    get ignore() {
       const v = this.getAttribute("ignore");
       return v == null ? null : new RegExp(v);
     }
-    set ignore(pattern: ?RegExp): void {
+    set ignore(pattern) {
       if (pattern != null) this.setAttribute("ignore", pattern.toString());
     }
 
-    get value(): string { return super.value; }
-    set value(v: string): void {
+    get value() {
+      return super.value;
+    }
+    set value(v) {
       super.value = v;
       if (document.activeElement === this) {
         this.select();
@@ -41,28 +42,30 @@ function mixinKeyInput<T: HTMLInputElement>(c: Class<T>): Class<T & KeyInput> {
 
     createdCallback() {
       this.type = "text";
-      this.addEventListener("keypress", (ev: KeyboardEvent) => ev.preventDefault(), true);
+      this.addEventListener("keypress", ev => ev.preventDefault(), true);
       this.addEventListener("focus", () => this.select());
     }
 
     attachedCallback() {}
 
-    static get observedAttributes() { return ["type"]; }
-    attributeChangedCallback(attrName: string) {
+    static get observedAttributes() {
+      return ["type"];
+    }
+    attributeChangedCallback(attrName) {
       switch (attrName) {
-      case "type":
-        this.type = "text";
-        break;
+        case "type":
+          this.type = "text";
+          break;
       }
     }
 
-    buildMatcher(): EventMatcher {
+    buildMatcher() {
       return new EventMatcher(this.value, generateOptions(this));
     }
   };
 }
 
-export function mixinKeydownInput<T: HTMLInputElement>(c: Class<T>): Class<T & KeydownInput> {
+export function mixinKeydownInput(c) {
   // $FlowFixMe Force cast to returned type
   return class extends mixinKeyInput(c) {
     constructor() {
@@ -71,16 +74,18 @@ export function mixinKeydownInput<T: HTMLInputElement>(c: Class<T>): Class<T & K
 
     createdCallback() {
       super.createdCallback();
-      this.addEventListener("keydown", (e: KeyboardEvent) => handleEvent(this, e));
+      this.addEventListener("keydown", e => handleEvent(this, e));
     }
   };
 }
 
 export class KeydownInputElement extends mixinKeydownInput(HTMLInputElement) {
-  static get extends() { return "input"; }
+  static get extends() {
+    return "input";
+  }
 }
 
-export function mixinKeyupInput<T: HTMLInputElement>(c: Class<T>): Class<T & KeyupInput> {
+export function mixinKeyupInput(c) {
   // $FlowFixMe Force cast to returned type
   return class extends mixinKeyInput(c) {
     constructor() {
@@ -89,8 +94,8 @@ export function mixinKeyupInput<T: HTMLInputElement>(c: Class<T>): Class<T & Key
 
     createdCallback() {
       super.createdCallback();
-      this.addEventListener("keyup", (e: KeyboardEvent) => handleEvent(this, e));
-      this.addEventListener("keydown", (e: KeyboardEvent) => {
+      this.addEventListener("keyup", e => handleEvent(this, e));
+      this.addEventListener("keydown", e => {
         const ignore = this.ignore;
         if (!ignore) {
           e.preventDefault();
@@ -109,7 +114,9 @@ export function mixinKeyupInput<T: HTMLInputElement>(c: Class<T>): Class<T & Key
 }
 
 export class KeyupInputElement extends mixinKeyupInput(HTMLInputElement) {
-  static get extends() { return "input"; }
+  static get extends() {
+    return "input";
+  }
 }
 
 export function register() {
@@ -119,16 +126,16 @@ export function register() {
 
 //
 
-function generateOptions(self: KeyInput): EventMatcherOptions {
-  const o: any = {};
+function generateOptions(self) {
+  const o = {};
   for (const [name, defaultValue] of Object.entries(DEFAULT_OPTIONS)) {
-    const value = (self: any)[name];
+    const value = self[name];
     o[name] = value == null ? defaultValue : value;
   }
   return o;
 }
 
-function handleEvent(self: KeyInput, event: KeyboardEvent) {
+function handleEvent(self, event) {
   if (self.readOnly) return;
   const v = buildValue(event, self);
   console.log(event);
@@ -136,7 +143,7 @@ function handleEvent(self: KeyInput, event: KeyboardEvent) {
   if (v) event.preventDefault();
 }
 
-function markAttr(self: HTMLElement, name: string, b: boolean): void {
+function markAttr(self, name, b) {
   if (b) {
     self.setAttribute(name, "");
   } else {

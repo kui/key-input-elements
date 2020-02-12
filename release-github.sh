@@ -17,7 +17,7 @@ npm run check
 npm run debug-dist
 npm run prod-dist
 
-( cd dist && tar zcf "$TAR_GZ" "$REPO" )
+( cd dist && tar zcf "$TAR_GZ" *.js )
 
 # Require https://github.com/aktau/github-release
 

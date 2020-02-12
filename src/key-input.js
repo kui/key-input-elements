@@ -1,6 +1,5 @@
 import EventMatcher, { buildValue, DEFAULT_OPTIONS } from "./event-matcher";
 
-
 function mixinKeyInput(c) {
   // $FlowFixMe Force cast to returned type
   return class extends c {

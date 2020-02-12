@@ -1,12 +1,15 @@
-
-
 const META_CODES = new Set(["Meta", "MetaLeft", "MetaRight"]);
 
 const CTRL_CODES = new Set(["Control", "ControlLeft", "ControlRight"]);
 const ALT_CODES = new Set(["Alt", "AltLeft", "AltRight"]);
 const SHIFT_CODES = new Set(["Shift", "ShiftLeft", "ShiftRight"]);
 
-const MOD_CODES = new Set([...Array.from(META_CODES), ...Array.from(CTRL_CODES), ...Array.from(ALT_CODES), ...Array.from(SHIFT_CODES)]);
+const MOD_CODES = new Set([
+  ...Array.from(META_CODES),
+  ...Array.from(CTRL_CODES),
+  ...Array.from(ALT_CODES),
+  ...Array.from(SHIFT_CODES)
+]);
 
 const DEFAULT_OPTIONS = {
   allowModOnly: false,
@@ -16,13 +19,18 @@ const DEFAULT_OPTIONS = {
 export { DEFAULT_OPTIONS };
 
 export default class EventMatcher {
-
   constructor(pattern) {
     this.key = parseValue(pattern);
   }
 
   test(k) {
-    return k.shiftKey === this.key.shiftKey && k.altKey === this.key.altKey && k.ctrlKey === this.key.ctrlKey && k.metaKey === this.key.metaKey && this.testModInsensitive(k);
+    return (
+      k.shiftKey === this.key.shiftKey &&
+      k.altKey === this.key.altKey &&
+      k.ctrlKey === this.key.ctrlKey &&
+      k.metaKey === this.key.metaKey &&
+      this.testModInsensitive(k)
+    );
   }
 
   testModInsensitive(k) {
@@ -32,18 +40,28 @@ export default class EventMatcher {
 
 function parseValue(pattern) {
   const splitted = pattern.split(" + ");
-  const key = { altKey: false, shiftKey: false, ctrlKey: false, metaKey: false, code: "" };
+  const key = {
+    altKey: false,
+    shiftKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    code: ""
+  };
   while (splitted.length !== 1) {
     const m = splitted.shift();
     switch (m) {
       case "Meta":
-        key.metaKey = true;break;
+        key.metaKey = true;
+        break;
       case "Ctrl":
-        key.ctrlKey = true;break;
+        key.ctrlKey = true;
+        break;
       case "Alt":
-        key.altKey = true;break;
+        key.altKey = true;
+        break;
       case "Shift":
-        key.shiftKey = true;break;
+        key.shiftKey = true;
+        break;
       default:
         throw Error(`Unexpected mod: ${m}`);
     }

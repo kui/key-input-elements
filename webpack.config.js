@@ -1,30 +1,17 @@
+const path = require("path");
 const DEBUG = process.env.NODE_ENV !== "production";
-const webpack = require("webpack");
-const BabiliPlugin = require("babili-webpack-plugin");
-
-const plugins = [
-  new webpack.optimize.DedupePlugin(),
-  new webpack.optimize.OccurrenceOrderPlugin(),
-];
-
-if (!DEBUG) {
-  plugins.push(new BabiliPlugin());
-}
 
 module.exports = {
-  debug: DEBUG,
+  mode: DEBUG ? "development" : "production",
   devtool: DEBUG ? "inline-source-map" : "source-map",
   entry: "./src/key-input-registerer.js",
   output: {
-    path: "./dist/key-input-elements",
+    path: path.resolve(__dirname, "dist"),
     filename: DEBUG ? "key-input-elements-debug.js" : "key-input-elements.js"
   },
   module: {
-    loaders: [
-      { test: /\.js$/,
-        exclude: /node_modules/,
-        loader: "babel-loader" }
+    rules: [
+      { test: /\.m?js$/, exclude: /node_modules/, loader: "babel-loader" }
     ]
-  },
-  plugins,
+  }
 };

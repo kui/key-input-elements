@@ -1,7 +1,6 @@
 import EventMatcher, { buildValue, DEFAULT_OPTIONS } from "./event-matcher";
 
 function mixinKeyInput(c) {
-  // $FlowFixMe Force cast to returned type
   return class extends c {
     get allowModOnly() {
       return this.hasAttribute("allow-mod-only");
@@ -37,9 +36,6 @@ function mixinKeyInput(c) {
 
     constructor() {
       super();
-    }
-
-    createdCallback() {
       this.type = "text";
       this.addEventListener("keypress", ev => ev.preventDefault(), true);
       this.addEventListener("focus", () => this.select());
@@ -65,34 +61,20 @@ function mixinKeyInput(c) {
 }
 
 export function mixinKeydownInput(c) {
-  // $FlowFixMe Force cast to returned type
   return class extends mixinKeyInput(c) {
     constructor() {
       super();
-    }
-
-    createdCallback() {
-      super.createdCallback();
       this.addEventListener("keydown", e => handleEvent(this, e));
     }
   };
 }
 
-export class KeydownInputElement extends mixinKeydownInput(HTMLInputElement) {
-  static get extends() {
-    return "input";
-  }
-}
+export class KeydownInputElement extends mixinKeydownInput(HTMLInputElement) {}
 
 export function mixinKeyupInput(c) {
-  // $FlowFixMe Force cast to returned type
   return class extends mixinKeyInput(c) {
     constructor() {
       super();
-    }
-
-    createdCallback() {
-      super.createdCallback();
       this.addEventListener("keyup", e => handleEvent(this, e));
       this.addEventListener("keydown", e => {
         const ignore = this.ignore;
@@ -112,15 +94,13 @@ export function mixinKeyupInput(c) {
   };
 }
 
-export class KeyupInputElement extends mixinKeyupInput(HTMLInputElement) {
-  static get extends() {
-    return "input";
-  }
-}
+export class KeyupInputElement extends mixinKeyupInput(HTMLInputElement) {}
 
 export function register() {
-  document.registerElement("keydown-input", KeydownInputElement);
-  document.registerElement("keyup-input", KeyupInputElement);
+  customElements.define("keydown-input", KeydownInputElement, {
+    extends: "input"
+  });
+  customElements.define("keyup-input", KeyupInputElement, { extends: "input" });
 }
 
 //
@@ -137,14 +117,14 @@ function generateOptions(self) {
 function handleEvent(self, event) {
   if (self.readOnly) return;
   const v = buildValue(event, self);
-  console.log(event);
+  console.debug(event);
   if (v != null) self.value = v;
   if (v) event.preventDefault();
 }
 
 function markAttr(self, name, b) {
   if (b) {
-    self.setAttribute(name, "");
+    self.setAttribute(name, b);
   } else {
     self.removeAttribute(name);
   }

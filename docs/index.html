@@ -1,5 +1,5 @@
 <!doctype html>
-<meta charset="utf-8">
+<meta charset="utf-8" />
 
 <title>&lt;keydown-input&gt;/&lt;keyup-input&gt; examples</title>
 
@@ -15,32 +15,73 @@
   }
 </style>
 
-<h1><code>&lt;keydown-input&gt;</code>/<code>&lt;keyup-input&gt;</code> examples</h1>
+<h1>
+  <code>&lt;keydown-input&gt;</code>/<code>&lt;keyup-input&gt;</code> examples
+</h1>
 
 <p>Custom elements to input key press events.</p>
 
 <h2>Simple Usages</h2>
 
-<p>See <a href="https://github.com/kui/key-input-elements/blob/master/docs/index.html">this HTML source</a></p>
+<p>
+  See
+  <a
+    href="https://github.com/kui/key-input-elements/blob/master/docs/index.html"
+    >this HTML source</a
+  >
+</p>
 
 <ul>
-  <li><label>Key down: <input is="keydown-input"></label></li>
-  <li><label>Key up: <input is="keyup-input"></label></li>
-  <li><label>Key down (permit only modifire keys): <input is="keydown-input" allow-mod-only></label></li>
-  <li><label>Key down (strip modifires): <input is="keydown-input" no-mod></label></li>
-  <li><label>Key down (ignore <code>Tab</code> and <code>KeyA</code> to <code>KeyD</code>): <input is="keydown-input" ignore="(\+ |^)(Tab|Key[A-D])$"></label></li>
+  <li>
+    <label>Key down: <input is="keydown-input" /></label>
+  </li>
+  <li>
+    <label>Key up: <input is="keyup-input" /></label>
+  </li>
+  <li>
+    <label
+      >Key down (permit only modifire keys):
+      <input is="keydown-input" allow-mod-only
+    /></label>
+  </li>
+  <li>
+    <label
+      >Key down (strip modifires): <input is="keydown-input" no-mod
+    /></label>
+  </li>
+  <li>
+    <label
+      >Key down (ignore <code>Tab</code> and <code>KeyA</code> to
+      <code>KeyD</code>):
+      <input is="keydown-input" ignore="(\+ |^)(Tab|Key[A-D])$"
+    /></label>
+  </li>
 </ul>
-
 
 <h2>Matching <code>Event</code></h2>
 
-<p><code>key-input</code> element has a method generates a matcher for <code>KeyBoardEvent</code></p>
+<p>
+  <code>key-input</code> element has a method generates a matcher for
+  <code>KeyBoardEvent</code>
+</p>
 
 <ul>
-  <li><label>Display <code>true</code> if you input <code>Shift + KeyD</code>
-    or else display <code>false</code>: <input id="result-display"></label></li>
-  <li><label>Key down (<code>readonly</code>):
-    <input is="keydown-input" id="keydown-config" value="Shift + KeyD" readonly></label></li>
+  <li>
+    <label
+      >Display <code>true</code> if you input <code>Shift + KeyD</code> or else
+      display <code>false</code>: <input id="result-display"
+    /></label>
+  </li>
+  <li>
+    <label
+      >Key down (<code>readonly</code>):
+      <input
+        is="keydown-input"
+        id="keydown-config"
+        value="Shift + KeyD"
+        readonly
+    /></label>
+  </li>
 </ul>
 
 <script>
@@ -54,12 +95,19 @@
     displayElement.addEventListener("keypress", (e) => e.preventDefault());
 
     const eventMatcher = configElement.buildMatcher();
-    displayElement.addEventListener("keydown", (e) => displayElement.value = eventMatcher.test(e));
-});
+    displayElement.addEventListener(
+      "keydown",
+      (e) => (displayElement.value = eventMatcher.test(e)),
+    );
+  });
 </script>
 
 <script src="key-input-elements-debug.js"></script>
 
-
 <!-- github ribbon -->
-<a href="https://github.com/kui/key-input-elements"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"></a>
+<a href="https://github.com/kui/key-input-elements"
+  ><img
+    style="position: absolute; top: 0; right: 0; border: 0"
+    src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"
+    alt="Fork me on GitHub"
+/></a>

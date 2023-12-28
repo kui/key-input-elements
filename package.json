@@ -2,6 +2,7 @@
   "name": "key-input-elements",
   "version": "2.0.0",
   "description": "custom elements to input key press events",
+  "type": "module",
   "main": "lib/key-input.js",
   "scripts": {
     "prepare": "npm run build",

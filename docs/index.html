@@ -3,25 +3,25 @@
 
 <title>&lt;keydown-input&gt;/&lt;keyup-input&gt; examples</title>
 
-<script src="CustomElements.min.js"></script>
-
 <style>
   code {
     background-color: #ddd;
     padding: 3px;
   }
+
   h2 {
     border-bottom: #999;
   }
 </style>
 
-<h1>
-  <code>&lt;keydown-input&gt;</code>/<code>&lt;keyup-input&gt;</code> examples
-</h1>
+<script type="module">
+  import * as ki from "./js/key-input-registerer.js";
+  ki.register();
+</script>
+
+<h1>Custom element: <code>key-input</code></h1>
 
 <p>Custom elements to input key press events.</p>
-
-<h2>Simple Usages</h2>
 
 <p>
   See
@@ -31,30 +31,41 @@
   >
 </p>
 
+<h2>Simple Usages</h2>
+
 <ul>
   <li>
-    <label>Key down: <input is="keydown-input" /></label>
+    <label>Simple: <input is="key-input" /></label>
   </li>
   <li>
-    <label>Key up: <input is="keyup-input" /></label>
+    <label>
+      <code>allow-mod-only</code> attribute: Permit keys which is pressed with a
+      modifire key
+      <br />
+      <input is="key-input" allow-mod-only />
+    </label>
   </li>
   <li>
-    <label
-      >Key down (permit only modifire keys):
-      <input is="keydown-input" allow-mod-only
-    /></label>
+    <label>
+      <code>strip-mod</code> attribute: Strip modifire keys
+      <br />
+      <input is="key-input" strip-mod />
+    </label>
   </li>
   <li>
-    <label
-      >Key down (strip modifires): <input is="keydown-input" no-mod
-    /></label>
+    <label>
+      <code>strip-mod</code> and <code>allow-mod-only</code>:
+      <br />
+      <input is="key-input" strip-mod allow-mod-only />
+    </label>
   </li>
   <li>
-    <label
-      >Key down (ignore <code>Tab</code> and <code>KeyA</code> to
-      <code>KeyD</code>):
-      <input is="keydown-input" ignore="(\+ |^)(Tab|Key[A-D])$"
-    /></label>
+    <label>
+      <code>ignore</code> attribute: Ignore provided pattern. This example
+      ignores <code>Tab</code> and <code>KeyA</code>.
+      <br />
+      <input is="key-input" ignore="( |^)(Tab|KeyA)$" />
+    </label>
   </li>
 </ul>
 
@@ -67,20 +78,15 @@
 
 <ul>
   <li>
-    <label
-      >Display <code>true</code> if you input <code>Shift + KeyD</code> or else
-      display <code>false</code>: <input id="result-display"
-    /></label>
+    <label>
+      Target key: <input is="key-input" id="config" value="Shift + KeyD" />
+    </label>
   </li>
   <li>
-    <label
-      >Key down (<code>readonly</code>):
-      <input
-        is="keydown-input"
-        id="keydown-config"
-        value="Shift + KeyD"
-        readonly
-    /></label>
+    <label>
+      Display <code>true</code> if you input <code>Shift + KeyD</code> or else
+      display <code>false</code>: <input id="display" />
+    </label>
   </li>
 </ul>
 
@@ -88,26 +94,13 @@
   window.addEventListener("load", () => {
     console.log("Setting up 'matching event' example");
 
-    const configElement = document.getElementById("keydown-config");
-    const displayElement = document.getElementById("result-display");
-
     // grab all inputs on id="result-display"
-    displayElement.addEventListener("keypress", (e) => e.preventDefault());
+    display.addEventListener("keypress", (e) => e.preventDefault());
 
-    const eventMatcher = configElement.buildMatcher();
-    displayElement.addEventListener(
+    const eventMatcher = config.buildMatcher();
+    display.addEventListener(
       "keydown",
-      (e) => (displayElement.value = eventMatcher.test(e)),
+      (e) => (display.value = eventMatcher.test(e)),
     );
   });
 </script>
-
-<script src="key-input-elements-debug.js"></script>
-
-<!-- github ribbon -->
-<a href="https://github.com/kui/key-input-elements"
-  ><img
-    style="position: absolute; top: 0; right: 0; border: 0"
-    src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"
-    alt="Fork me on GitHub"
-/></a>

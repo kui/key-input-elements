@@ -1,109 +1,94 @@
-import { EventMatcher, buildKeyEventString } from "./event-matcher.js";
+const META_CODES = new Set(["Meta", "MetaLeft", "MetaRight"]);
 
-type HTMLInputElemenetConstructor<
-  E extends HTMLInputElement = HTMLInputElement,
-> = new () => E;
+const CTRL_CODES = new Set(["Control", "ControlLeft", "ControlRight"]);
+const ALT_CODES = new Set(["Alt", "AltLeft", "AltRight"]);
+const SHIFT_CODES = new Set(["Shift", "ShiftLeft", "ShiftRight"]);
 
-interface KeyInputMixin extends HTMLInputElement {
-  allowModOnly: boolean;
-  stripMod: boolean;
-  ignore: RegExp | null;
-  buildMatcher(): EventMatcher;
-}
+const MOD_CODES = new Set([
+  ...Array.from(META_CODES),
+  ...Array.from(CTRL_CODES),
+  ...Array.from(ALT_CODES),
+  ...Array.from(SHIFT_CODES),
+]);
 
-export function mixinKeyInput(
-  base: HTMLInputElemenetConstructor,
-): HTMLInputElemenetConstructor<KeyInputMixin> {
-  return class extends base {
-    get allowModOnly() {
-      return this.hasAttribute("allow-mod-only");
-    }
-    set allowModOnly(b) {
-      setBoolAtter(this, "allow-mod-only", b);
-    }
+const MOD_KEY_FLAGS = ["shiftKey", "altKey", "ctrlKey", "metaKey"] as const;
+export type ModKeyFlagName = (typeof MOD_KEY_FLAGS)[number];
 
-    get stripMod() {
-      return this.hasAttribute("strip-mod");
-    }
-    set stripMod(b) {
-      setBoolAtter(this, "strip-mod", b);
-    }
+export type KeyInputLike = {
+  [K in ModKeyFlagName]?: boolean;
+} & {
+  code: string;
+};
 
-    get ignore() {
-      const v = this.getAttribute("ignore");
-      return v === null ? null : new RegExp(v);
-    }
-    set ignore(pattern) {
-      if (pattern === null) {
-        this.removeAttribute("ignore");
-      } else {
-        this.setAttribute("ignore", pattern.toString());
-      }
-    }
+export class KeyInput implements KeyInputLike {
+  readonly shiftKey: boolean;
+  readonly altKey: boolean;
+  readonly ctrlKey: boolean;
+  readonly metaKey: boolean;
+  readonly code: string;
 
-    get value() {
-      return super.value;
-    }
-    set value(v) {
-      super.value = v;
-      if (document.activeElement === this) {
-        this.select();
-      }
-    }
+  constructor(k: KeyInputLike) {
+    this.shiftKey = k.shiftKey ?? false;
+    this.altKey = k.altKey ?? false;
+    this.ctrlKey = k.ctrlKey ?? false;
+    this.metaKey = k.metaKey ?? false;
+    this.code = k.code;
+  }
 
-    constructor() {
-      super();
-      this.type = "text";
-      this.addEventListener(
-        "keypress",
-        (ev) => {
-          ev.preventDefault();
-        },
-        true,
-      );
-      this.addEventListener("keydown", (e) => {
-        if (this.readOnly) return;
-        const keyString = buildKeyEventString(e, this);
-        if (keyString != null) {
-          this.value = keyString;
-          e.preventDefault();
-        }
-      });
-      this.addEventListener("focus", () => {
-        this.select();
-      });
-    }
-
-    static get observedAttributes() {
-      return ["type"];
-    }
-    attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-      super.attributeChangedCallback?.(name, oldValue, newValue);
-      switch (name) {
-        case "type":
-          this.type = "text";
+  static parse(pattern: string) {
+    const splitted = pattern.split(/ *\+ */);
+    const key = {
+      altKey: false,
+      shiftKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      code: "",
+    };
+    while (splitted.length !== 1) {
+      const m = splitted.shift();
+      switch (m) {
+        case "Meta":
+          key.metaKey = true;
           break;
+        case "Ctrl":
+          key.ctrlKey = true;
+          break;
+        case "Alt":
+          key.altKey = true;
+          break;
+        case "Shift":
+          key.shiftKey = true;
+          break;
+        default:
+          throw Error(`Unexpected mod: ${m}`);
       }
     }
+    key.code = splitted[0];
+    return new KeyInput(key);
+  }
 
-    buildMatcher() {
-      return EventMatcher.parse(this.value);
-    }
-  };
-}
-
-export class KeyInputElement extends mixinKeyInput(HTMLInputElement) {
-  static register() {
-    customElements.define("key-input", this, { extends: "input" });
+  toString() {
+    const a = [this.code];
+    if (this.shiftKey && !isShiftKey(this)) a.unshift("Shift");
+    if (this.altKey && !isAltKey(this)) a.unshift("Alt");
+    if (this.ctrlKey && !isCtrlKey(this)) a.unshift("Ctrl");
+    if (this.metaKey && !isMetaKey(this)) a.unshift("Meta");
+    return a.join(" + ");
   }
 }
 
-//
-
-function setBoolAtter(self: Element, name: string, b: boolean) {
-  if (b) {
-    self.setAttribute(name, "");
-  } else {
-    self.removeAttribute(name);
-  }
+export function isModKey(key: KeyInputLike) {
+  return MOD_CODES.has(key.code);
+}
+export function isMetaKey(key: KeyInputLike) {
+  return META_CODES.has(key.code);
+}
+export function isCtrlKey(key: KeyInputLike) {
+  return CTRL_CODES.has(key.code);
+}
+export function isAltKey(key: KeyInputLike) {
+  return ALT_CODES.has(key.code);
+}
+export function isShiftKey(key: KeyInputLike) {
+  return SHIFT_CODES.has(key.code);
 }

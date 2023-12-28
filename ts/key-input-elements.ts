@@ -1,5 +1,5 @@
 import { EventMatcher } from "./event-matcher.js";
-import { KeyInput, isModKey } from "./key-input.js";
+import { KeyInput, isModifierKey } from "./key-input.js";
 
 type HTMLInputElemenetConstructor<
   E extends HTMLInputElement = HTMLInputElement,
@@ -17,6 +17,8 @@ export function mixinKeyInput(
   base: HTMLInputElemenetConstructor,
 ): HTMLInputElemenetConstructor<KeyInputMixin> {
   return class extends base {
+    private readonly historyCodes: string[] = [];
+
     get allowModOnly() {
       return this.hasAttribute("allow-mod-only");
     }
@@ -59,21 +61,25 @@ export function mixinKeyInput(
 
     constructor() {
       super();
-      this.type = "text";
-      this.addEventListener(
-        "keypress",
-        (ev) => {
-          ev.preventDefault();
-        },
-        true,
-      );
+      if (this.type !== "text") {
+        console.warn("KeyInputElement: type must be text");
+      }
+      this.removeAttribute("type");
       this.addEventListener("keydown", (e) => {
         if (this.readOnly) return;
-        const keyEventString = buildKeyEventString(e, this);
-        if (keyEventString != null) {
+        if (e.repeat) {
+          e.preventDefault();
+          return;
+        }
+        const keyEventString = this.buildKeyEventString(e);
+        if (keyEventString !== null) {
           this.value = keyEventString;
           e.preventDefault();
         }
+        arrayPushIfNotExists(this.historyCodes, e.code);
+      });
+      this.addEventListener("keyup", (e) => {
+        arrayRemove(this.historyCodes, e.code);
       });
       this.addEventListener("focus", () => {
         this.select();
@@ -83,40 +89,44 @@ export function mixinKeyInput(
     static get observedAttributes() {
       return ["type"];
     }
-    attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    attributeChangedCallback(
+      name: string,
+      oldValue: string | null,
+      newValue: string | null,
+    ) {
       super.attributeChangedCallback?.(name, oldValue, newValue);
-      switch (name) {
-        case "type":
-          this.type = "text";
-          break;
+      if (name === "type") {
+        if (this.type !== "text") {
+          console.warn("KeyInputElement: type must be text");
+        }
+        if (newValue !== null) {
+          this.removeAttribute("type");
+        }
       }
     }
 
     buildMatcher() {
       return EventMatcher.parse(this.value);
     }
+
+    private buildKeyEventString(keyboardEvent: KeyboardEvent) {
+      const code = keyboardEvent.code;
+      if (!this.allowModOnly && isModifierKey(keyboardEvent.code)) return null;
+
+      const event = this.stripMod ? { code } : keyboardEvent;
+      const historyCodes: string[] = this.multiple ? this.historyCodes : [];
+      const keyInput = new KeyInput(
+        event,
+        historyCodes.filter((c) => c !== code),
+      );
+
+      const keyEventString = keyInput.toString();
+      if (this.ignoreRegExp?.test(keyEventString)) {
+        return null;
+      }
+      return keyEventString;
+    }
   };
-}
-
-function buildKeyEventString(
-  keyboardEvent: KeyboardEvent,
-  options: KeyInputMixin,
-) {
-  const code = keyboardEvent.code;
-  if (!options.allowModOnly && isModKey(keyboardEvent)) return null;
-
-  let keyInput: KeyInput;
-  if (options.stripMod) {
-    keyInput = new KeyInput({ code });
-  } else {
-    keyInput = new KeyInput(keyboardEvent);
-  }
-
-  const keyEventString = keyInput.toString();
-  if (options.ignore !== null && options.ignoreRegExp?.test(keyEventString)) {
-    return null;
-  }
-  return keyEventString;
 }
 
 export class KeyInputElement extends mixinKeyInput(HTMLInputElement) {
@@ -133,4 +143,17 @@ function setBoolAtter(self: Element, name: string, b: boolean) {
   } else {
     self.removeAttribute(name);
   }
+}
+
+function arrayPushIfNotExists<T>(array: T[], value: T): boolean {
+  if (array.includes(value)) return false;
+  array.push(value);
+  return true;
+}
+
+function arrayRemove<T>(array: T[], value: T): boolean {
+  const index = array.indexOf(value);
+  if (index < 0) return false;
+  array.splice(index, 1);
+  return true;
 }

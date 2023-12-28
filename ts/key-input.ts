@@ -1,24 +1,33 @@
-const META_CODES = new Set(["Meta", "MetaLeft", "MetaRight"]);
-
-const CTRL_CODES = new Set(["Control", "ControlLeft", "ControlRight"]);
-const ALT_CODES = new Set(["Alt", "AltLeft", "AltRight"]);
-const SHIFT_CODES = new Set(["Shift", "ShiftLeft", "ShiftRight"]);
-
-const MOD_CODES = new Set([
-  ...Array.from(META_CODES),
-  ...Array.from(CTRL_CODES),
-  ...Array.from(ALT_CODES),
-  ...Array.from(SHIFT_CODES),
-]);
-
-const MOD_KEY_FLAGS = ["shiftKey", "altKey", "ctrlKey", "metaKey"] as const;
-export type ModKeyFlagName = (typeof MOD_KEY_FLAGS)[number];
-
-export type KeyInputLike = {
-  [K in ModKeyFlagName]?: boolean;
-} & {
+const modKeyCodes = {
+  meta: new Set(["MetaLeft", "MetaRight"]),
+  ctrl: new Set(["ControlLeft", "ControlRight"]),
+  alt: new Set(["AltLeft", "AltRight"]),
+  shift: new Set(["ShiftLeft", "ShiftRight"]),
+} as const;
+const modKeyCodeList = Object.entries(modKeyCodes) as [
+  ModKeyString,
+  Set<string>,
+][];
+type ModKeyString = keyof typeof modKeyCodes;
+type ModKeyFlagName<M extends ModKeyString = ModKeyString> = `${M}Key`;
+export interface KeyInputLike extends Partial<Record<ModKeyFlagName, boolean>> {
   code: string;
-};
+}
+
+const capitalizedModKeys = Object.fromEntries(
+  modKeyCodeList.map(([mod]) => [
+    mod,
+    (mod[0].toUpperCase() + mod.slice(1)) as Capitalize<typeof mod>,
+  ]),
+) as Record<ModKeyString, Capitalize<ModKeyString>>;
+const capitalizedModKeyList = Object.entries(capitalizedModKeys) as [
+  ModKeyString,
+  Capitalize<ModKeyString>,
+][];
+
+const allModKeyCodes = new Set(
+  Object.values(modKeyCodes).flatMap((s) => [...s]),
+);
 
 export class KeyInput implements KeyInputLike {
   readonly shiftKey: boolean;
@@ -26,69 +35,56 @@ export class KeyInput implements KeyInputLike {
   readonly ctrlKey: boolean;
   readonly metaKey: boolean;
   readonly code: string;
+  readonly historyCodes: string[];
 
-  constructor(k: KeyInputLike) {
+  constructor(k: KeyInputLike, historyCodes: string[] = []) {
     this.shiftKey = k.shiftKey ?? false;
     this.altKey = k.altKey ?? false;
     this.ctrlKey = k.ctrlKey ?? false;
     this.metaKey = k.metaKey ?? false;
     this.code = k.code;
+    this.historyCodes = historyCodes;
   }
 
   static parse(pattern: string) {
     const splitted = pattern.split(/ *\+ */);
-    const key = {
-      altKey: false,
-      shiftKey: false,
-      ctrlKey: false,
-      metaKey: false,
-      code: "",
-    };
-    while (splitted.length !== 1) {
-      const m = splitted.shift();
-      switch (m) {
-        case "Meta":
-          key.metaKey = true;
-          break;
-        case "Ctrl":
-          key.ctrlKey = true;
-          break;
-        case "Alt":
-          key.altKey = true;
-          break;
-        case "Shift":
-          key.shiftKey = true;
-          break;
-        default:
-          throw Error(`Unexpected mod: ${m}`);
+    const key: KeyInputLike = { code: "" };
+    while (splitted.length > 1) {
+      const m = splitted[0];
+      for (const [mod, capitalized] of capitalizedModKeyList) {
+        if (m === capitalized) {
+          key[`${mod}Key`] = true;
+          splitted.shift();
+          continue;
+        }
       }
+      break;
     }
-    key.code = splitted[0];
-    return new KeyInput(key);
+    key.code = splitted.pop() ?? "";
+    if (key.code === "") {
+      console.warn("Invalid key pattern: %s", pattern);
+    }
+    return new KeyInput(key, splitted);
   }
 
   toString() {
-    const a = [this.code];
-    if (this.shiftKey && !isShiftKey(this)) a.unshift("Shift");
-    if (this.altKey && !isAltKey(this)) a.unshift("Alt");
-    if (this.ctrlKey && !isCtrlKey(this)) a.unshift("Ctrl");
-    if (this.metaKey && !isMetaKey(this)) a.unshift("Meta");
+    const a = [];
+    let historyCodes = [...this.historyCodes];
+    for (const [mod, codes] of modKeyCodeList) {
+      if (this[`${mod}Key`] && !isModifierKey(this.code, mod)) {
+        a.push(capitalizedModKeys[mod]);
+        historyCodes = historyCodes.filter((c) => !codes.has(c));
+      }
+    }
+    a.push(...historyCodes);
+    a.push(this.code);
     return a.join(" + ");
   }
 }
 
-export function isModKey(key: KeyInputLike) {
-  return MOD_CODES.has(key.code);
-}
-export function isMetaKey(key: KeyInputLike) {
-  return META_CODES.has(key.code);
-}
-export function isCtrlKey(key: KeyInputLike) {
-  return CTRL_CODES.has(key.code);
-}
-export function isAltKey(key: KeyInputLike) {
-  return ALT_CODES.has(key.code);
-}
-export function isShiftKey(key: KeyInputLike) {
-  return SHIFT_CODES.has(key.code);
+export function isModifierKey(code: string, mod?: ModKeyString) {
+  if (mod) {
+    return modKeyCodes[mod].has(code);
+  }
+  return allModKeyCodes.has(code);
 }

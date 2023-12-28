@@ -25,7 +25,7 @@ export type Key = {
   code: string;
 };
 
-export default class EventMatcher {
+export class EventMatcher {
   constructor(private readonly key: Key) {}
 
   static parse(pattern: string) {
@@ -80,34 +80,34 @@ function parseValue(pattern: string) {
 }
 
 interface BuildValueOptions {
-  allowModOnly?: boolean;
-  noMod?: boolean;
-  ignore?: RegExp | null;
+  allowModOnly: boolean;
+  stripMod: boolean;
+  ignore: RegExp | null;
 }
 
-export function buildValue(key: Key, options: BuildValueOptions) {
+export function buildKeyEventString(key: Key, options: BuildValueOptions) {
   const code = key.code;
   if (!options.allowModOnly && isModKey(key.code)) {
     return null;
   }
 
-  let value;
-  if (options.noMod) {
-    value = code;
+  let s;
+  if (options.stripMod) {
+    s = code;
   } else {
     const a = [code];
     if (key.metaKey && !isMetaKey(code)) a.unshift("Meta");
     if (key.ctrlKey && !isCtrlKey(code)) a.unshift("Ctrl");
     if (key.altKey && !isAltKey(code)) a.unshift("Alt");
     if (key.shiftKey && !isShiftKey(code)) a.unshift("Shift");
-    value = a.join(" + ");
+    s = a.join(" + ");
   }
 
   const ignore = options.ignore;
-  if (ignore && ignore.test(value)) {
+  if (ignore?.test(s)) {
     return null;
   }
-  return value;
+  return s;
 }
 
 function isModKey(code: string) {

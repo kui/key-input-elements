@@ -1,3 +1,5 @@
-import * as ki from "./key-input.js";
+import { KeyInputElement } from "./key-input.js";
 
-ki.register();
+export function register() {
+  KeyInputElement.register();
+}

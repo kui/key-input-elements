@@ -1,4 +1,4 @@
-import EventMatcher, { buildValue } from "./event-matcher.js";
+import { EventMatcher, buildKeyEventString } from "./event-matcher.js";
 
 type HTMLInputElemenetConstructor<
   E extends HTMLInputElement = HTMLInputElement,
@@ -6,7 +6,7 @@ type HTMLInputElemenetConstructor<
 
 interface KeyInputMixin extends HTMLInputElement {
   allowModOnly: boolean;
-  noMod: boolean;
+  stripMod: boolean;
   ignore: RegExp | null;
   buildMatcher(): EventMatcher;
 }
@@ -22,19 +22,23 @@ export function mixinKeyInput(
       setBoolAtter(this, "allow-mod-only", b);
     }
 
-    get noMod() {
-      return this.hasAttribute("no-mod");
+    get stripMod() {
+      return this.hasAttribute("strip-mod");
     }
-    set noMod(b) {
-      setBoolAtter(this, "no-mod", b);
+    set stripMod(b) {
+      setBoolAtter(this, "strip-mod", b);
     }
 
     get ignore() {
       const v = this.getAttribute("ignore");
-      return v == null ? null : new RegExp(v);
+      return v === null ? null : new RegExp(v);
     }
     set ignore(pattern) {
-      if (pattern != null) this.setAttribute("ignore", pattern.toString());
+      if (pattern === null) {
+        this.removeAttribute("ignore");
+      } else {
+        this.setAttribute("ignore", pattern.toString());
+      }
     }
 
     get value() {
@@ -57,6 +61,14 @@ export function mixinKeyInput(
         },
         true,
       );
+      this.addEventListener("keydown", (e) => {
+        if (this.readOnly) return;
+        const keyString = buildKeyEventString(e, this);
+        if (keyString != null) {
+          this.value = keyString;
+          e.preventDefault();
+        }
+      });
       this.addEventListener("focus", () => {
         this.select();
       });
@@ -80,62 +92,13 @@ export function mixinKeyInput(
   };
 }
 
-export function mixinKeydownInput(base: HTMLInputElemenetConstructor) {
-  return class extends mixinKeyInput(base) {
-    constructor() {
-      super();
-      this.addEventListener("keydown", (e) => {
-        handleEvent(this, e);
-      });
-    }
-  };
-}
-
-export class KeydownInputElement extends mixinKeydownInput(HTMLInputElement) {}
-
-export function mixinKeyupInput(c: HTMLInputElemenetConstructor) {
-  return class extends mixinKeyInput(c) {
-    constructor() {
-      super();
-      this.addEventListener("keyup", (e) => {
-        handleEvent(this, e);
-      });
-      this.addEventListener("keydown", (e) => {
-        const ignore = this.ignore;
-        if (!ignore) {
-          e.preventDefault();
-          return;
-        }
-
-        const v = buildValue(e, this);
-        if (v && ignore.test(v)) {
-          return;
-        }
-
-        e.preventDefault();
-      });
-    }
-  };
-}
-
-export class KeyupInputElement extends mixinKeyupInput(HTMLInputElement) {}
-
-export function register() {
-  customElements.define("keydown-input", KeydownInputElement, {
-    extends: "input",
-  });
-  customElements.define("keyup-input", KeyupInputElement, { extends: "input" });
+export class KeyInputElement extends mixinKeyInput(HTMLInputElement) {
+  static register() {
+    customElements.define("key-input", this, { extends: "input" });
+  }
 }
 
 //
-
-function handleEvent(self: KeyInputMixin, event: KeyboardEvent) {
-  if (self.readOnly) return;
-  const v = buildValue(event, self);
-  console.debug(event);
-  if (v != null) self.value = v;
-  if (v) event.preventDefault();
-}
 
 function setBoolAtter(self: Element, name: string, b: boolean) {
   if (b) {

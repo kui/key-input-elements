@@ -7,7 +7,7 @@ interface KeyboardEventLike extends KeyInputLike {
 }
 
 export class EventMatcher {
-  readonly currentHistory = new CodeHistory();
+  private readonly currentHistory = new CodeHistory();
 
   constructor(private readonly targetInput: KeyInput) {}
 
@@ -40,5 +40,9 @@ export class EventMatcher {
   buildMatcher(event: KeyboardEventLike) {
     const key = new KeyInput(event, this.currentHistory.copy());
     return (o: KeyInputEqualsOptions = {}) => this.targetInput.equals(key, o);
+  }
+
+  reset() {
+    this.currentHistory.clear();
   }
 }

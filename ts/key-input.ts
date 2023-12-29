@@ -1,8 +1,9 @@
-import type { ModKeyString } from "./key-codes.js";
+import type { ModName } from "./key-codes.js";
 import { CodeHistory } from "./code-history.js";
-import { modKeyCodes, modKeyCodeList, allModKeyCodes } from "./key-codes.js";
+import { modKeyCodes, modKeyCodeList, isModName } from "./key-codes.js";
+import { isModKeyCode } from "./key-codes.js";
 
-type ModFlagName<M extends ModKeyString = ModKeyString> = `${M}Key`;
+type ModFlagName<M extends ModName = ModName> = `${M}Key`;
 export interface KeyInputLike extends Partial<Record<ModFlagName, boolean>> {
   code: string;
 }
@@ -12,10 +13,10 @@ const capitalizedModKeys = Object.fromEntries(
     mod,
     (mod[0].toUpperCase() + mod.slice(1)) as Capitalize<typeof mod>,
   ]),
-) as Record<ModKeyString, Capitalize<ModKeyString>>;
+) as Record<ModName, Capitalize<ModName>>;
 const capitalizedModKeyList = Object.entries(capitalizedModKeys) as [
-  ModKeyString,
-  Capitalize<ModKeyString>,
+  ModName,
+  Capitalize<ModName>,
 ][];
 
 export interface KeyInputEqualsOptions {
@@ -25,6 +26,12 @@ export interface KeyInputEqualsOptions {
    * @default false
    */
   rawMod?: boolean;
+
+  /**
+   * How to compare history.
+   *
+   * @default "orderInsensitive"
+   */
   historySensitive?: "orderInsensitive" | "orderSensitive" | "ignore";
 }
 
@@ -91,13 +98,11 @@ export class KeyInput implements KeyInputLike {
 
     // Parse modifier keys
     while (splitted.length > 1) {
-      const m = splitted[0];
-      for (const [mod, capitalized] of capitalizedModKeyList) {
-        if (m === capitalized) {
-          key[`${mod}Key`] = true;
-          splitted.shift();
-          continue;
-        }
+      const m = splitted[0].toLowerCase();
+      if (isModName(m)) {
+        key[`${m}Key`] = true;
+        splitted.shift();
+        continue;
       }
       // Reach here if `m` is not a modifier key.
       break;
@@ -108,9 +113,7 @@ export class KeyInput implements KeyInputLike {
       const c = splitted[0];
       history.put(c);
       const modFlag = codeToModFlag(c);
-      if (modFlag) {
-        key[modFlag] = true;
-      }
+      if (modFlag) key[modFlag] = true;
       splitted.shift();
     }
 
@@ -166,15 +169,11 @@ export class KeyInput implements KeyInputLike {
       ? []
       : this.history.codes("olderToNewer").filter((c) => c !== this.code);
     if (!rawMod) {
-      historyCodes = historyCodes.filter((c) => !isModifierKey(c));
+      historyCodes = historyCodes.filter((c) => !isModKeyCode(c));
     }
     const codes = [...modKeys, ...historyCodes, this.code];
     return codes.join(" + ");
   }
-}
-
-export function isModifierKey(code: string, mod?: ModKeyString) {
-  return mod ? modKeyCodes[mod].has(code) : allModKeyCodes.has(code);
 }
 
 function codeToModFlag(code: string): ModFlagName | null {

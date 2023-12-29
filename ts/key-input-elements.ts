@@ -1,6 +1,7 @@
 import { CodeHistory } from "./code-history.js";
 import { EventMatcher } from "./event-matcher.js";
-import { KeyInput, isModifierKey } from "./key-input.js";
+import { KeyInput } from "./key-input.js";
+import { isModKeyCode } from "./key-codes.js";
 
 type HTMLInputElemenetConstructor<
   E extends HTMLInputElement = HTMLInputElement,
@@ -104,7 +105,7 @@ export function mixinKeyInput(
     }
 
     private buildKeyEventString(keyboardEvent: KeyboardEvent) {
-      if (!this.rawMod && isModifierKey(keyboardEvent.code)) return null;
+      if (!this.rawMod && isModKeyCode(keyboardEvent.code)) return null;
 
       const keyInput = new KeyInput(keyboardEvent, this.history);
       const keyEventString = keyInput.toString({

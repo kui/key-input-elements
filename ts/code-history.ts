@@ -84,4 +84,9 @@ export class CodeHistory {
   copy() {
     return CodeHistory.fromCodes(this.history, "newerToOlder");
   }
+
+  clear() {
+    this.history = [];
+    this.set.clear();
+  }
 }

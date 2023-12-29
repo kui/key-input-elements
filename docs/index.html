@@ -48,10 +48,13 @@
   </dt>
   <dd>Allow multiple keys.</dd>
   <dt>
-    Enable <code>multiple</code> and <code>raw-mod</code>:
+    <code>multiple</code> and <code>raw-mod</code>:
     <input is="key-input" multiple raw-mod />
   </dt>
-  <dd>Allow multiple keys and treat modifier keys as normal keys.</dd>
+  <dd>
+    This is the useful combination when you want to detect an event that
+    distinguish <code>ShiftLeft</code> and <code>ShiftRight</code>.
+  </dd>
   <dt>
     <code>ignore</code> attribute:
     <input is="key-input" ignore="( |^)(Tab|KeyA)$" />

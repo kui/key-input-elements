@@ -67,10 +67,6 @@ export function mixinKeyInput(
       this.removeAttribute("type");
       this.addEventListener("keydown", (e) => {
         if (this.readOnly) return;
-        if (e.repeat) {
-          e.preventDefault();
-          return;
-        }
         const keyEventString = this.buildKeyEventString(e);
         if (keyEventString !== null) {
           this.value = keyEventString;

@@ -85,7 +85,9 @@ describe("EventMatcher", () => {
       });
       expect(matcher3.match()).toBe(true);
       expect(matcher3.match({ rawMod: true })).toBe(true);
-      expect(matcher3.match({ historySensitive: "orderSensitive" })).toBe(false);
+      expect(matcher3.match({ historySensitive: "orderSensitive" })).toBe(
+        false,
+      );
       expect(matcher3.match({ historySensitive: "ignore" })).toBe(true);
     });
   });

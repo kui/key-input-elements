@@ -68,6 +68,7 @@ export function mixinKeyInput(
         if (keyEventString !== null) {
           if (!this.ignoreRegExp?.test(keyEventString)) {
             this.value = keyEventString;
+            this.dispatchEvent(new Event("change", { bubbles: true }));
           }
           e.preventDefault();
         }

@@ -3,7 +3,16 @@
   "version": "2.0.0",
   "description": "custom elements to input key press events",
   "type": "module",
-  "main": "lib/key-input.js",
+  "exports": {
+    ".": {
+      "import": "./js/key-input-registerer.js",
+      "types": "./types/key-input-registerer.d.ts"
+    },
+    "./event-matcher": {
+      "import": "./js/event-matcher.js",
+      "types": "./types/event-matcher.d.ts"
+    }
+  },
   "scripts": {
     "prepare": "npm run build",
     "test": "jest",

@@ -1,3 +1,5 @@
+import { CodeHistory } from "./code-history.js";
+
 const modKeyCodes = {
   meta: new Set(["MetaLeft", "MetaRight"]),
   ctrl: new Set(["ControlLeft", "ControlRight"]),
@@ -29,21 +31,42 @@ const allModKeyCodes = new Set(
   Object.values(modKeyCodes).flatMap((s) => [...s]),
 );
 
+export interface EqualsOptions {
+  modSensitive?: boolean;
+  historySensitive?: "orderInsensitive" | "orderSensitive" | "ignore";
+}
+
+export interface ToStringOptions {
+  /**
+   * Strip modifier keys from the returned string.
+   *
+   * If `true`, the returned string will not contain any modifier keys like "Meta +" or "Shift +",
+   * but the modifier codes like "+ MetaLeft", "+ ShiftLeft" will show history codes.
+   * If `false`, the returned string will contain modifier keys, but the modifier code will not show history codes.
+   *
+   * @default false
+   * @see {@link KeyInput#toString}
+   */
+  stripMod?: boolean;
+  stripHistory?: boolean;
+}
+
 export class KeyInput implements KeyInputLike {
   readonly shiftKey: boolean;
   readonly altKey: boolean;
   readonly ctrlKey: boolean;
   readonly metaKey: boolean;
   readonly code: string;
-  readonly historyCodes: string[];
 
-  constructor(k: KeyInputLike, historyCodes: string[] = []) {
+  constructor(
+    k: KeyInputLike,
+    readonly history: CodeHistory,
+  ) {
     this.shiftKey = k.shiftKey ?? false;
     this.altKey = k.altKey ?? false;
     this.ctrlKey = k.ctrlKey ?? false;
     this.metaKey = k.metaKey ?? false;
     this.code = k.code;
-    this.historyCodes = historyCodes;
   }
 
   static parse(pattern: string) {
@@ -64,21 +87,57 @@ export class KeyInput implements KeyInputLike {
     if (key.code === "") {
       console.warn("Invalid key pattern: %s", pattern);
     }
-    return new KeyInput(key, splitted);
+    const history = CodeHistory.fromCodes(splitted, "olderToNewer");
+    return new KeyInput(key, history);
   }
 
-  toString() {
-    const a = [];
-    let historyCodes = [...this.historyCodes];
-    for (const [mod, codes] of modKeyCodeList) {
-      if (this[`${mod}Key`] && !isModifierKey(this.code, mod)) {
-        a.push(capitalizedModKeys[mod]);
-        historyCodes = historyCodes.filter((c) => !codes.has(c));
+  equals(
+    other: KeyInput,
+    {
+      modSensitive = true,
+      historySensitive = "orderInsensitive",
+    }: EqualsOptions = {},
+  ): boolean {
+    if (this.code !== other.code) return false;
+
+    if (modSensitive) {
+      for (const [mod] of modKeyCodeList) {
+        if (this[`${mod}Key`] !== other[`${mod}Key`]) return false;
       }
     }
-    a.push(...historyCodes);
-    a.push(this.code);
-    return a.join(" + ");
+
+    if (
+      historySensitive === "orderInsensitive" &&
+      !this.history.equals(other.history, false)
+    ) {
+      return false;
+    } else if (
+      historySensitive === "orderSensitive" &&
+      !this.history.equals(other.history, true)
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * @param options The options for the returned string.
+   */
+  toString({ stripMod = false, stripHistory = false }: ToStringOptions = {}) {
+    const modKeys = stripMod
+      ? []
+      : capitalizedModKeyList
+          .filter(([m]) => this[`${m}Key`] && !modKeyCodes[m].has(this.code))
+          .map(([, m]) => m);
+    let historyCodes = stripHistory
+      ? []
+      : this.history.codes("olderToNewer").filter((c) => c !== this.code);
+    if (!stripMod) {
+      historyCodes = historyCodes.filter((c) => !isModifierKey(c));
+    }
+    const codes = [...modKeys, ...historyCodes, this.code];
+    return codes.join(" + ");
   }
 }
 

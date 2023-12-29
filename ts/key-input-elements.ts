@@ -1,3 +1,4 @@
+import { CodeHistory } from "./code-history.js";
 import { EventMatcher } from "./event-matcher.js";
 import { KeyInput, isModifierKey } from "./key-input.js";
 
@@ -17,7 +18,7 @@ export function mixinKeyInput(
   base: HTMLInputElemenetConstructor,
 ): HTMLInputElemenetConstructor<KeyInputMixin> {
   return class extends base {
-    private readonly historyCodes: string[] = [];
+    private readonly history = new CodeHistory();
 
     get allowModOnly() {
       return this.hasAttribute("allow-mod-only");
@@ -69,13 +70,15 @@ export function mixinKeyInput(
         if (this.readOnly) return;
         const keyEventString = this.buildKeyEventString(e);
         if (keyEventString !== null) {
-          this.value = keyEventString;
+          if (!this.ignoreRegExp?.test(keyEventString)) {
+            this.value = keyEventString;
+          }
           e.preventDefault();
         }
-        arrayPushIfNotExists(this.historyCodes, e.code);
+        this.history.put(e.code);
       });
       this.addEventListener("keyup", (e) => {
-        arrayRemove(this.historyCodes, e.code);
+        this.history.remove(e.code);
       });
       this.addEventListener("focus", () => {
         this.select();
@@ -106,20 +109,13 @@ export function mixinKeyInput(
     }
 
     private buildKeyEventString(keyboardEvent: KeyboardEvent) {
-      const code = keyboardEvent.code;
       if (!this.allowModOnly && isModifierKey(keyboardEvent.code)) return null;
 
-      const event = this.stripMod ? { code } : keyboardEvent;
-      const historyCodes: string[] = this.multiple ? this.historyCodes : [];
-      const keyInput = new KeyInput(
-        event,
-        historyCodes.filter((c) => c !== code),
-      );
-
-      const keyEventString = keyInput.toString();
-      if (this.ignoreRegExp?.test(keyEventString)) {
-        return null;
-      }
+      const keyInput = new KeyInput(keyboardEvent, this.history);
+      const keyEventString = keyInput.toString({
+        stripMod: this.stripMod,
+        stripHistory: !this.multiple,
+      });
       return keyEventString;
     }
   };
@@ -139,17 +135,4 @@ function setBoolAtter(self: Element, name: string, b: boolean) {
   } else {
     self.removeAttribute(name);
   }
-}
-
-function arrayPushIfNotExists<T>(array: T[], value: T): boolean {
-  if (array.includes(value)) return false;
-  array.push(value);
-  return true;
-}
-
-function arrayRemove<T>(array: T[], value: T): boolean {
-  const index = array.indexOf(value);
-  if (index < 0) return false;
-  array.splice(index, 1);
-  return true;
 }

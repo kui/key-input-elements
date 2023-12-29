@@ -31,7 +31,7 @@
   >
 </p>
 
-<h2>Simple Usages</h2>
+<h2>Usages</h2>
 
 <ul>
   <li>
@@ -39,22 +39,22 @@
   </li>
   <li>
     <label>
-      <code>allow-mod-only</code> attribute: Permit keys which is pressed with a
-      modifire key
+      <code>allow-mod-only</code> bool attribute: Permit keys which is pressed
+      with a modifire key
       <br />
       <input is="key-input" allow-mod-only />
     </label>
   </li>
   <li>
     <label>
-      <code>strip-mod</code> attribute: Strip modifire keys
+      <code>strip-mod</code> bool attribute: Strip modifire keys
       <br />
       <input is="key-input" strip-mod />
     </label>
   </li>
   <li>
     <label>
-      <code>strip-mod</code> and <code>allow-mod-only</code>:
+      Enable <code>strip-mod</code> and <code>allow-mod-only</code>
       <br />
       <input is="key-input" strip-mod allow-mod-only />
     </label>
@@ -71,39 +71,73 @@
     <label>
       <code>multiple</code> attribute: Allow multiple keys
       <br />
-      <input is="key-input" multiple allow-mod-only strip-mod />
+      <input is="key-input" multiple />
+    </label>
+  </li>
+  <li>
+    <label>
+      Enable <code>multiple</code>, <code>strip-mod</code> and
+      <code>allow-mod-only</code>
+      <br />
+      <input is="key-input" multiple strip-mod allow-mod-only />
     </label>
   </li>
 </ul>
 
-<h2>Matching <code>Event</code></h2>
+<h2>Matching KeyboardEvent</h2>
 
 <p>
-  <code>key-input</code> element has a method generates a matcher for
-  <code>KeyBoardEvent</code>
+  <code>EventMatcher</code> is a class to match <code>KeyboardEvent</code> with
+  a provided pattern.
+</p>
+
+<p>
+  Press any key in the following input. If the key matches
+  <code>Shift + KeyD</code>, the next display will be <code>true</code> by each
+  condition.
+</p>
+
+<p>
+  <code>key-input</code> element: <input is="key-input" id="keyinput" multiple />
 </p>
 
 <ul>
   <li>
     <label>
-      Display <code>true</code> if you input <code>Shift + KeyD</code> or else
-      display <code>false</code>: <input id="display" />
+      <code>historySensitive=ignore</code>:
+      Display <code>true</code> if you input <code>Shift + KeyD</code>
+      <br />
+      <output id="display1"></output>
+    </label>
+  </li>
+  <li>
+    <label>
+      <code>historySensitive=orderInsensitive</code>(default):
+      Display <code>true</code> if you press <code>KeyD</code> with holding down any <code>Shift</code> keys, <code>KeyA</code> and <code>KeyS</code>.
+      <br />
+      <output id="display2"></output>
     </label>
   </li>
 </ul>
 
 <script type="module">
   import { EventMatcher } from "./js/event-matcher.js";
-  window.addEventListener("load", () => {
+  window.addEventListener("DOMContentLoaded", () => {
     console.log("Setting up 'matching event' example");
 
-    // grab all inputs on id="result-display"
-    display.addEventListener("keypress", (e) => e.preventDefault());
+    const matcher = EventMatcher.parse("Shift + KeyA + KeyS + KeyD");
 
-    const eventMatcher = EventMatcher.parse("Shift+KeyD");
-    display.addEventListener(
-      "keydown",
-      (e) => (display.value = eventMatcher.test(e)),
-    );
+    keyinput.addEventListener("keydown", (e) => {
+      const m = matcher.keydown(e);
+      display1.value = m.match({
+        historySensitive: "ignore",
+      });
+      display2.value = m.match({
+        historySensitive: "orderInsensitive",
+      });
+    });
+    keyinput.addEventListener("keyup", (e) => {
+      matcher.keyup(e);
+    });
   });
 </script>

@@ -1,34 +1,41 @@
-import { KeyInput } from "./key-input.js";
+import { CodeHistory } from "./code-history.js";
+import { EqualsOptions, KeyInput, KeyInputLike } from "./key-input.js";
+
+interface KeyboardEventLike extends KeyInputLike {
+  type: string;
+}
 
 export class EventMatcher {
-  constructor(private readonly keyInput: KeyInput) {}
+  readonly currentHistory = new CodeHistory();
+
+  constructor(private readonly targetInput: KeyInput) {}
 
   static parse(pattern: string) {
     return new EventMatcher(KeyInput.parse(pattern));
   }
 
-  test(k: KeyboardEvent, historyCodes: string[] = []) {
-    return (
-      k.shiftKey === this.keyInput.shiftKey &&
-      k.altKey === this.keyInput.altKey &&
-      k.ctrlKey === this.keyInput.ctrlKey &&
-      k.metaKey === this.keyInput.metaKey &&
-      this.testModInsensitive(k, historyCodes)
-    );
+  keydown(event: KeyboardEventLike): {
+    match(options?: EqualsOptions): boolean;
+  } {
+    if (event.type !== "keydown") {
+      console.warn("Unexpected event type: %s", event.type);
+    }
+    const match = this.buildMatcher(event);
+    this.currentHistory.put(event.code);
+    return { match };
   }
 
-  testModInsensitive(k: KeyboardEvent, historyCodes: string[] = []) {
-    return (
-      this.keyInput.code === k.code &&
-      arrayIsEqualsOrderInsensitive(historyCodes, this.keyInput.historyCodes)
-    );
+  keyup(event: KeyboardEventLike): { match(options?: EqualsOptions): boolean } {
+    if (event.type !== "keyup") {
+      console.warn("Unexpected event type: %s", event.type);
+    }
+    const match = this.buildMatcher(event);
+    this.currentHistory.remove(event.code);
+    return { match };
+  }
+
+  buildMatcher(event: KeyboardEventLike) {
+    const key = new KeyInput(event, this.currentHistory.copy());
+    return (o: EqualsOptions = {}) => this.targetInput.equals(key, o);
   }
 }
-
-const arrayIsEqualsOrderInsensitive = (a: string[], b: string[]) => {
-  if (a.length !== b.length) return false;
-  if (a.length === 0) return true;
-  if (a === b) return true;
-  const a2 = a.toSorted();
-  return b.toSorted().every((v, i) => v === a2[i]);
-};

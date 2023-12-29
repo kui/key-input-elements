@@ -1,18 +1,9 @@
+import type { ModKeyString } from "./key-codes.js";
 import { CodeHistory } from "./code-history.js";
+import { modKeyCodes, modKeyCodeList, allModKeyCodes } from "./key-codes.js";
 
-const modKeyCodes = {
-  meta: new Set(["MetaLeft", "MetaRight"]),
-  ctrl: new Set(["ControlLeft", "ControlRight"]),
-  alt: new Set(["AltLeft", "AltRight"]),
-  shift: new Set(["ShiftLeft", "ShiftRight"]),
-} as const;
-const modKeyCodeList = Object.entries(modKeyCodes) as [
-  ModKeyString,
-  Set<string>,
-][];
-type ModKeyString = keyof typeof modKeyCodes;
-type ModKeyFlagName<M extends ModKeyString = ModKeyString> = `${M}Key`;
-export interface KeyInputLike extends Partial<Record<ModKeyFlagName, boolean>> {
+type ModFlagName<M extends ModKeyString = ModKeyString> = `${M}Key`;
+export interface KeyInputLike extends Partial<Record<ModFlagName, boolean>> {
   code: string;
 }
 
@@ -27,27 +18,23 @@ const capitalizedModKeyList = Object.entries(capitalizedModKeys) as [
   Capitalize<ModKeyString>,
 ][];
 
-const allModKeyCodes = new Set(
-  Object.values(modKeyCodes).flatMap((s) => [...s]),
-);
-
-export interface EqualsOptions {
-  modSensitive?: boolean;
+export interface KeyInputEqualsOptions {
+  /**
+   * Treat modifier keys as normal keys.
+   *
+   * @default false
+   */
+  rawMod?: boolean;
   historySensitive?: "orderInsensitive" | "orderSensitive" | "ignore";
 }
 
-export interface ToStringOptions {
+export interface KeyInputToStringOptions {
   /**
-   * Strip modifier keys from the returned string.
-   *
-   * If `true`, the returned string will not contain any modifier keys like "Meta +" or "Shift +",
-   * but the modifier codes like "+ MetaLeft", "+ ShiftLeft" will show history codes.
-   * If `false`, the returned string will contain modifier keys, but the modifier code will not show history codes.
+   * Treat modifier keys as normal keys.
    *
    * @default false
-   * @see {@link KeyInput#toString}
    */
-  stripMod?: boolean;
+  rawMod?: boolean;
   stripHistory?: boolean;
 }
 
@@ -69,9 +56,40 @@ export class KeyInput implements KeyInputLike {
     this.code = k.code;
   }
 
-  static parse(pattern: string) {
+  /**
+   * Parse a key string.
+   *
+   * The string is the following format:
+   *
+   * ```
+   * [<mod-key> + ... +][<holding-key> + ... +]<new-key>
+   * ```
+   *
+   * `<mod-key>` is one of `Ctrl`, `Alt`, `Shift`, `Meta`.
+   *
+   * `<holding-key>` and `<newer-key>` are key codes.
+   *
+   * The order of `<holding-key>` and `<new-key>` is older to newer.
+   *
+   * Example1: Represent to hold any `Shift` key, then press `A` key.
+   *
+   * ```
+   * Shift + KeyA
+   * ```
+   *
+   * Example2: Represent to hold `A` then `S`, then press `D` key.
+   *
+   * ```
+   * KeyA + KeyS + KeyD
+   * ```
+   *
+   */
+  static parse(pattern: string): KeyInput {
     const splitted = pattern.split(/ *\+ */);
     const key: KeyInputLike = { code: "" };
+    const history = new CodeHistory();
+
+    // Parse modifier keys
     while (splitted.length > 1) {
       const m = splitted[0];
       for (const [mod, capitalized] of capitalizedModKeyList) {
@@ -81,41 +99,52 @@ export class KeyInput implements KeyInputLike {
           continue;
         }
       }
+      // Reach here if `m` is not a modifier key.
       break;
     }
+
+    // Parse holding keys
+    while (splitted.length > 1) {
+      const c = splitted[0];
+      history.put(c);
+      const modFlag = codeToModFlag(c);
+      if (modFlag) {
+        key[modFlag] = true;
+      }
+      splitted.shift();
+    }
+
+    // parse new key
     key.code = splitted.pop() ?? "";
     if (key.code === "") {
       console.warn("Invalid key pattern: %s", pattern);
     }
-    const history = CodeHistory.fromCodes(splitted, "olderToNewer");
     return new KeyInput(key, history);
   }
 
   equals(
     other: KeyInput,
     {
-      modSensitive = true,
+      rawMod = false,
       historySensitive = "orderInsensitive",
-    }: EqualsOptions = {},
+    }: KeyInputEqualsOptions = {},
   ): boolean {
     if (this.code !== other.code) return false;
 
-    if (modSensitive) {
-      for (const [mod] of modKeyCodeList) {
+    // match modifier
+    if (!rawMod) {
+      for (const [mod] of modKeyCodeList)
         if (this[`${mod}Key`] !== other[`${mod}Key`]) return false;
-      }
     }
 
-    if (
-      historySensitive === "orderInsensitive" &&
-      !this.history.equals(other.history, false)
-    ) {
-      return false;
-    } else if (
-      historySensitive === "orderSensitive" &&
-      !this.history.equals(other.history, true)
-    ) {
-      return false;
+    // match history
+    if (historySensitive !== "ignore") {
+      const orderSensitive = historySensitive === "orderSensitive";
+      const matchHistory = this.history.equals(other.history, {
+        orderSensitive,
+        ignoreMod: !rawMod,
+      });
+      if (!matchHistory) return false;
     }
 
     return true;
@@ -124,8 +153,11 @@ export class KeyInput implements KeyInputLike {
   /**
    * @param options The options for the returned string.
    */
-  toString({ stripMod = false, stripHistory = false }: ToStringOptions = {}) {
-    const modKeys = stripMod
+  toString({
+    rawMod = false,
+    stripHistory = false,
+  }: KeyInputToStringOptions = {}) {
+    const modKeys = rawMod
       ? []
       : capitalizedModKeyList
           .filter(([m]) => this[`${m}Key`] && !modKeyCodes[m].has(this.code))
@@ -133,7 +165,7 @@ export class KeyInput implements KeyInputLike {
     let historyCodes = stripHistory
       ? []
       : this.history.codes("olderToNewer").filter((c) => c !== this.code);
-    if (!stripMod) {
+    if (!rawMod) {
       historyCodes = historyCodes.filter((c) => !isModifierKey(c));
     }
     const codes = [...modKeys, ...historyCodes, this.code];
@@ -142,8 +174,12 @@ export class KeyInput implements KeyInputLike {
 }
 
 export function isModifierKey(code: string, mod?: ModKeyString) {
-  if (mod) {
-    return modKeyCodes[mod].has(code);
+  return mod ? modKeyCodes[mod].has(code) : allModKeyCodes.has(code);
+}
+
+function codeToModFlag(code: string): ModFlagName | null {
+  for (const [mod, codes] of modKeyCodeList) {
+    if (codes.has(code)) return `${mod}Key`;
   }
-  return allModKeyCodes.has(code);
+  return null;
 }

@@ -1,16 +1,21 @@
 <!doctype html>
 <meta charset="utf-8" />
 
-<title>&lt;keydown-input&gt;/&lt;keyup-input&gt; examples</title>
+<title>Custom Element: &lt;key-input&gt;</title>
 
 <style>
   code {
     background-color: #ddd;
-    padding: 3px;
+    padding: 4px;
   }
-
-  h2 {
-    border-bottom: #999;
+  dt {
+    font-weight: bold;
+    margin-top: 1em;
+  }
+  output {
+    font-family: monospace;
+    font-size: 1.2em;
+    font-weight: bold;
   }
 </style>
 
@@ -19,7 +24,7 @@
   ki.register();
 </script>
 
-<h1>Custom element: <code>key-input</code></h1>
+<h1>Custom Element: <code>key-input</code></h1>
 
 <p>Custom elements to input key press events.</p>
 
@@ -28,61 +33,34 @@
   <a
     href="https://github.com/kui/key-input-elements/blob/master/docs/index.html"
     >this HTML source</a
-  >
+  >.
 </p>
 
-<h2>Usages</h2>
+<h2>Usage</h2>
 
-<ul>
-  <li>
-    <label>Simple: <input is="key-input" /></label>
-  </li>
-  <li>
-    <label>
-      <code>allow-mod-only</code> bool attribute: Permit keys which is pressed
-      with a modifire key
-      <br />
-      <input is="key-input" allow-mod-only />
-    </label>
-  </li>
-  <li>
-    <label>
-      <code>strip-mod</code> bool attribute: Strip modifire keys
-      <br />
-      <input is="key-input" strip-mod />
-    </label>
-  </li>
-  <li>
-    <label>
-      Enable <code>strip-mod</code> and <code>allow-mod-only</code>
-      <br />
-      <input is="key-input" strip-mod allow-mod-only />
-    </label>
-  </li>
-  <li>
-    <label>
-      <code>ignore</code> attribute: Ignore provided pattern. This example
-      ignores <code>Tab</code> and <code>KeyA</code>.
-      <br />
-      <input is="key-input" ignore="( |^)(Tab|KeyA)$" />
-    </label>
-  </li>
-  <li>
-    <label>
-      <code>multiple</code> attribute: Allow multiple keys
-      <br />
-      <input is="key-input" multiple />
-    </label>
-  </li>
-  <li>
-    <label>
-      Enable <code>multiple</code>, <code>strip-mod</code> and
-      <code>allow-mod-only</code>
-      <br />
-      <input is="key-input" multiple strip-mod allow-mod-only />
-    </label>
-  </li>
-</ul>
+<dl>
+  <dt>Simple Usage: <input is="key-input" /></dt>
+  <dd>Just <code>&lt;input is="key-input" /&gt;</code></dd>
+  <dt><code>raw-mod</code> Bool Attribute: <input is="key-input" raw-mod /></dt>
+  <dd>Treat modifier keys as normal keys.</dd>
+  <dt>
+    <code>multiple</code> Bool Attribute: <input is="key-input" multiple />
+  </dt>
+  <dd>Allow multiple keys.</dd>
+  <dt>
+    Enable <code>multiple</code> and <code>raw-mod</code>:
+    <input is="key-input" multiple raw-mod />
+  </dt>
+  <dd>Allow multiple keys and treat modifier keys as normal keys.</dd>
+  <dt>
+    <code>ignore</code> attribute:
+    <input is="key-input" ignore="( |^)(Tab|KeyA)$" />
+  </dt>
+  <dd>
+    Ignore provided pattern. This example ignores <code>Tab</code> and
+    <code>KeyA</code>.
+  </dd>
+</dl>
 
 <h2>Matching KeyboardEvent</h2>
 
@@ -92,33 +70,11 @@
 </p>
 
 <p>
-  Press any key in the following input. If the key matches
-  <code>Shift + KeyD</code>, the next display will be <code>true</code> by each
-  condition.
+  Press any key in the following input element. The <code>EventMatcher</code> is
+  built with <code>Shift + KeyA + KeyS + KeyD</code>. The result of matching
+  with the input element is displayed in the following output elements. The
+  result is <code>true</code> if the input element matches with each condition.
 </p>
-
-<p>
-  <code>key-input</code> element: <input is="key-input" id="keyinput" multiple />
-</p>
-
-<ul>
-  <li>
-    <label>
-      <code>historySensitive=ignore</code>:
-      Display <code>true</code> if you input <code>Shift + KeyD</code>
-      <br />
-      <output id="display1"></output>
-    </label>
-  </li>
-  <li>
-    <label>
-      <code>historySensitive=orderInsensitive</code>(default):
-      Display <code>true</code> if you press <code>KeyD</code> with holding down any <code>Shift</code> keys, <code>KeyA</code> and <code>KeyS</code>.
-      <br />
-      <output id="display2"></output>
-    </label>
-  </li>
-</ul>
 
 <script type="module">
   import { EventMatcher } from "./js/event-matcher.js";
@@ -129,15 +85,40 @@
 
     keyinput.addEventListener("keydown", (e) => {
       const m = matcher.keydown(e);
-      display1.value = m.match({
-        historySensitive: "ignore",
-      });
-      display2.value = m.match({
-        historySensitive: "orderInsensitive",
-      });
+      display1.value = m.match({ historySensitive: "ignore" });
+      display2.value = m.match({ historySensitive: "orderInsensitive" });
+      display3.value = m.match({ historySensitive: "orderSensitive" });
     });
     keyinput.addEventListener("keyup", (e) => {
       matcher.keyup(e);
     });
   });
 </script>
+
+<p>
+  <code>key-input</code> element:
+  <input is="key-input" id="keyinput" multiple />
+</p>
+
+<dl>
+  <dt><code>historySensitive=ignore</code></dt>
+  <dd>
+    result= <output id="display1"></output><br />
+    Display <code>true</code> if you input <code>Shift + KeyD</code>
+  </dd>
+
+  <dt><code>historySensitive=orderInsensitive</code> (default)</dt>
+  <dd>
+    result= <output id="display2"></output><br />
+    Display <code>true</code> if you input <code>KeyD</code> with holding down
+    any <code>Shift</code> keys, <code>KeyA</code> and <code>KeyS</code>.
+  </dd>
+
+  <dt><code>historySensitive=orderSensitive</code></dt>
+  <dd>
+    result= <output id="display3"></output><br />
+    Display <code>true</code> if you input <code>KeyD</code> with holding down
+    any <code>Shift</code> keys, <code>KeyA</code> and <code>KeyS</code> with
+    the order.
+  </dd>
+</dl>

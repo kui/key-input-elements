@@ -1,3 +1,12 @@
+import { allModKeyCodes } from "./key-codes.js";
+
+export type CodeOrder = "newerToOlder" | "olderToNewer";
+
+export interface CodeHistoryEqualsOptions {
+  orderSensitive?: boolean;
+  ignoreMod?: boolean;
+}
+
 export class CodeHistory {
   /**
    * Newer codes are at the beginning of the array.
@@ -9,7 +18,7 @@ export class CodeHistory {
    */
   private set = new Set<string>();
 
-  static fromCodes(codes: string[], order: "newerToOlder" | "olderToNewer") {
+  static fromCodes(codes: string[], order: CodeOrder) {
     const h = new CodeHistory();
     h.putAll(codes, order);
     return h;
@@ -29,7 +38,7 @@ export class CodeHistory {
    * @param codes put codes in this order.
    * @param order The order of `codes`.
    */
-  putAll(codes: string[], order: "newerToOlder" | "olderToNewer") {
+  putAll(codes: string[], order: CodeOrder) {
     const ordered = order === "olderToNewer" ? codes : codes.toReversed();
     for (const c of ordered) this.put(c);
   }
@@ -47,19 +56,28 @@ export class CodeHistory {
    * @param order The order of the returned array.
    * @returns codes in this order.
    */
-  codes(order: "newerToOlder" | "olderToNewer") {
+  codes(order: CodeOrder) {
     return order === "newerToOlder"
       ? [...this.history]
       : this.history.toReversed();
   }
 
-  equals(other: CodeHistory, orderSensitive = true) {
+  equals(
+    other: CodeHistory,
+    { orderSensitive = true, ignoreMod = false }: CodeHistoryEqualsOptions = {},
+  ) {
     if (this === other) return true;
-    if (this.history.length !== other.history.length) return false;
+    let thisHistory = this.history;
+    let otherHistory = other.history;
+    if (ignoreMod) {
+      thisHistory = thisHistory.filter((c) => !allModKeyCodes.has(c));
+      otherHistory = otherHistory.filter((c) => !allModKeyCodes.has(c));
+    }
+    if (thisHistory.length !== otherHistory.length) return false;
     if (orderSensitive) {
-      return this.history.every((c, i) => c === other.history[i]);
+      return thisHistory.every((c, i) => c === otherHistory[i]);
     } else {
-      return this.history.every((c) => other.has(c));
+      return thisHistory.every((c) => other.has(c));
     }
   }
 

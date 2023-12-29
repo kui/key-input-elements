@@ -7,10 +7,9 @@ type HTMLInputElemenetConstructor<
 > = new () => E;
 
 interface KeyInputMixin extends HTMLInputElement {
-  allowModOnly: boolean;
-  stripMod: boolean;
+  rawMod: boolean;
   ignore: string | null;
-  ignoreRegExp: RegExp | null;
+  get ignoreRegExp(): RegExp | null;
   buildMatcher(): EventMatcher;
 }
 
@@ -20,18 +19,14 @@ export function mixinKeyInput(
   return class extends base {
     private readonly history = new CodeHistory();
 
-    get allowModOnly() {
-      return this.hasAttribute("allow-mod-only");
+    /**
+     * If true, modifier keys are treated as normal keys.
+     */
+    get rawMod() {
+      return this.hasAttribute("raw-mod");
     }
-    set allowModOnly(b) {
-      setBoolAtter(this, "allow-mod-only", b);
-    }
-
-    get stripMod() {
-      return this.hasAttribute("strip-mod");
-    }
-    set stripMod(b) {
-      setBoolAtter(this, "strip-mod", b);
+    set rawMod(b) {
+      setBoolAtter(this, "raw-mod", b);
     }
 
     get ignore() {
@@ -109,11 +104,11 @@ export function mixinKeyInput(
     }
 
     private buildKeyEventString(keyboardEvent: KeyboardEvent) {
-      if (!this.allowModOnly && isModifierKey(keyboardEvent.code)) return null;
+      if (!this.rawMod && isModifierKey(keyboardEvent.code)) return null;
 
       const keyInput = new KeyInput(keyboardEvent, this.history);
       const keyEventString = keyInput.toString({
-        stripMod: this.stripMod,
+        rawMod: this.rawMod,
         stripHistory: !this.multiple,
       });
       return keyEventString;

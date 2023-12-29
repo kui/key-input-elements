@@ -1,5 +1,6 @@
+import type { KeyInputEqualsOptions, KeyInputLike } from "./key-input.js";
 import { CodeHistory } from "./code-history.js";
-import { EqualsOptions, KeyInput, KeyInputLike } from "./key-input.js";
+import { KeyInput } from "./key-input.js";
 
 interface KeyboardEventLike extends KeyInputLike {
   type: string;
@@ -15,7 +16,7 @@ export class EventMatcher {
   }
 
   keydown(event: KeyboardEventLike): {
-    match(options?: EqualsOptions): boolean;
+    match(options?: KeyInputEqualsOptions): boolean;
   } {
     if (event.type !== "keydown") {
       console.warn("Unexpected event type: %s", event.type);
@@ -25,7 +26,9 @@ export class EventMatcher {
     return { match };
   }
 
-  keyup(event: KeyboardEventLike): { match(options?: EqualsOptions): boolean } {
+  keyup(event: KeyboardEventLike): {
+    match(options?: KeyInputEqualsOptions): boolean;
+  } {
     if (event.type !== "keyup") {
       console.warn("Unexpected event type: %s", event.type);
     }
@@ -36,6 +39,6 @@ export class EventMatcher {
 
   buildMatcher(event: KeyboardEventLike) {
     const key = new KeyInput(event, this.currentHistory.copy());
-    return (o: EqualsOptions = {}) => this.targetInput.equals(key, o);
+    return (o: KeyInputEqualsOptions = {}) => this.targetInput.equals(key, o);
   }
 }

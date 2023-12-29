@@ -21,7 +21,9 @@ const capitalizedModKeyList = Object.entries(capitalizedModKeys) as [
 
 export interface KeyInputEqualsOptions {
   /**
-   * Treat modifier keys as normal keys.
+   * Treat modifier keys as normal keys. Modifiers such as `Ctrl` and
+   * `Shift` are ignored to match as normal keys because they can't be
+   * convert into normal keys.
    *
    * @default false
    */

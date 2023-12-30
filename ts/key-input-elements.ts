@@ -64,6 +64,7 @@ export function mixinKeyInput(
       this.removeAttribute("type");
       this.addEventListener("keydown", (e) => {
         if (this.readOnly) return;
+        this.history.put(e.code);
         const keyEventString = this.buildKeyEventString(e);
         if (keyEventString !== null) {
           if (!this.ignoreRegExp?.test(keyEventString)) {
@@ -72,7 +73,6 @@ export function mixinKeyInput(
           }
           e.preventDefault();
         }
-        this.history.put(e.code);
       });
       this.addEventListener("keyup", (e) => {
         this.history.remove(e.code);

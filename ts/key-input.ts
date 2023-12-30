@@ -63,6 +63,7 @@ export class KeyInput implements KeyInputLike {
     this.ctrlKey = k.ctrlKey ?? false;
     this.metaKey = k.metaKey ?? false;
     this.code = k.code;
+    this.history.put(k.code);
   }
 
   /**
@@ -111,7 +112,7 @@ export class KeyInput implements KeyInputLike {
     }
 
     // Parse holding keys
-    while (splitted.length > 1) {
+    while (splitted.length > 0) {
       const c = splitted[0];
       history.put(c);
       const modFlag = codeToModFlag(c);
@@ -120,7 +121,7 @@ export class KeyInput implements KeyInputLike {
     }
 
     // parse new key
-    key.code = splitted.pop() ?? "";
+    key.code = history.last() ?? "";
     if (key.code === "") {
       console.warn("Invalid key pattern: %s", pattern);
     }
@@ -134,16 +135,16 @@ export class KeyInput implements KeyInputLike {
       historySensitive = "orderInsensitive",
     }: KeyInputEqualsOptions = {},
   ): boolean {
-    if (this.code !== other.code) return false;
-
     // match modifier
     if (!rawMod) {
       for (const [mod] of modKeyCodeList)
         if (this[`${mod}Key`] !== other[`${mod}Key`]) return false;
     }
 
-    // match history
-    if (historySensitive !== "ignore") {
+    // match history or only match the newest key
+    if (historySensitive === "ignore") {
+      if (this.code !== other.code) return false;
+    } else {
       const orderSensitive = historySensitive === "orderSensitive";
       const matchHistory = this.history.equals(other.history, {
         orderSensitive,

@@ -95,7 +95,8 @@ describe("EventMatcher", () => {
   describe("keyup", () => {
     it("should return a matcher", () => {
       const m = EventMatcher.parse("KeyA");
-      const matcher = m.keyup({ code: "KeyA", type: "keyup" });
+      m.keydown({ type: "keydown", code: "KeyA" });
+      const matcher = m.keyup({ type: "keyup", code: "KeyA" });
       expect(matcher.match()).toBe(true);
     });
   });

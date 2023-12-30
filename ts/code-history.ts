@@ -62,6 +62,10 @@ export class CodeHistory {
       : this.history.toReversed();
   }
 
+  last(): string | undefined {
+    return this.history[0];
+  }
+
   equals(
     other: CodeHistory,
     { orderSensitive = true, ignoreMod = false }: CodeHistoryEqualsOptions = {},
@@ -88,5 +92,9 @@ export class CodeHistory {
   clear() {
     this.history = [];
     this.set.clear();
+  }
+
+  toString() {
+    return `CodeHistory(${this.history.join(", ")})`;
   }
 }

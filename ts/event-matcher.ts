@@ -21,9 +21,8 @@ export class EventMatcher {
     if (event.type !== "keydown") {
       console.warn("Unexpected event type: %s", event.type);
     }
-    const match = this.buildMatcher(event);
     this.currentHistory.put(event.code);
-    return { match };
+    return { match: this.buildMatcher(event) };
   }
 
   keyup(event: KeyboardEventLike): {

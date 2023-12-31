@@ -1,4 +1,4 @@
-import type { KeyInputEqualsOptions, KeyInputLike } from "../key-input.js";
+import type { KeyInputLike } from "../key-input.js";
 import { CodeHistory } from "../code-history.js";
 import { KeyInput } from "../key-input.js";
 
@@ -8,40 +8,46 @@ interface KeyboardEventLike extends KeyInputLike {
 
 interface Matcher {
   /**
-   * Match the latest key code with the matcher target key code.
+   * Match the current history of key codes with the matcher target history.
    *
-   * e.g. `Ctrl+Shift+KeyA` as a target input matches `Ctrl+Shift+KeyA`.
-   * If `options.historySensitive` is `"ignore"`,
-   * it also matches `Ctrl+Shift+KeyB+KeyA` but not `Ctrl+Shift+KeyA+KeyB`.
+   * e.g. `Ctrl + Shift + KeyA` as a target input matches
+   * the current input such as:
+   * - `Ctrl + Shift + KeyA`
+   * - `Ctrl + Shift + Alt + KeyA`
+   * - `Ctrl + Shift + KeyA + KeyB`
+   * - `Ctrl + Shift + KeyB + KeyA`
    *
-   * This method treats inputs as 3 parts:
+   * This method treats inputs as 2 parts:
    *
    * ```
-   * Ctrl + Shift + KeyA + KeyB + KeyC +  KeyD
-   * |- Modifier -|----- History ------|- Input -|
+   * Ctrl + Shift + KeyA + KeyB + KeyC + KeyD
+   * |- Modifier -|--------- History --------|
    * ```
    *
-   * "Input" is the last input code which should be matched in this method.
-   *
-   * "History" is the history of input codes which should be matched depending
-   * on `options.historySensitive`.
+   * "History" is the history of input codes which should be a superset of
+   * the target history.
    *
    * "Modifier" is the modifier keys which is ignored if `options.rawMod`
-   * is `true`.
+   * is `true`, otherwise it should be also superset of the target history.
    *
    * @param options How to compare
-   * @see {@link KeyInputEqualsOptions}
+   * @returns `true` if the latest history is a superset of the target history,
+   * otherwise `false`.
    */
-  match(options?: KeyInputEqualsOptions): boolean;
+  match(o?: Option): boolean;
 }
 
-export class KeyInputMatcher {
+interface Option {
+  rawMod?: boolean;
+}
+
+export class KeyHoldMatcher {
   private readonly currentHistory = new CodeHistory();
 
   constructor(private readonly targetInput: KeyInput) {}
 
   static parse(pattern: string) {
-    return new KeyInputMatcher(KeyInput.parse(pattern));
+    return new KeyHoldMatcher(KeyInput.parse(pattern));
   }
 
   keydown(event: KeyboardEventLike): Matcher {
@@ -56,15 +62,15 @@ export class KeyInputMatcher {
     if (event.type !== "keyup") {
       console.warn("Unexpected event type: %s", event.type);
     }
-    const matcher = this.buildMatcher(event);
     this.currentHistory.remove(event.code);
-    return matcher;
+    return this.buildMatcher(event);
   }
 
   private buildMatcher(event: KeyboardEventLike): Matcher {
     const key = new KeyInput(event, this.currentHistory.copy());
     return {
-      match: (o: KeyInputEqualsOptions = {}) => this.targetInput.equals(key, o),
+      match: ({ rawMod = false }: Option = {}) =>
+        this.targetInput.isSubsetOf(key, rawMod),
     };
   }
 

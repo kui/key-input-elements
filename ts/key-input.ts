@@ -63,7 +63,6 @@ export class KeyInput implements KeyInputLike {
     this.ctrlKey = k.ctrlKey ?? false;
     this.metaKey = k.metaKey ?? false;
     this.code = k.code;
-    this.history.put(k.code);
   }
 
   /**
@@ -120,7 +119,7 @@ export class KeyInput implements KeyInputLike {
       splitted.shift();
     }
 
-    // parse new key
+    // Parse new key
     key.code = history.last() ?? "";
     if (key.code === "") {
       console.warn("Invalid key pattern: %s", pattern);
@@ -154,6 +153,26 @@ export class KeyInput implements KeyInputLike {
     }
 
     return true;
+  }
+
+  /**
+   *
+   * @param other
+   * @param rawMod Treat modifier keys as normal keys. If `true`, modifier key
+   * flags are ignored then only history is compared. The history matching
+   * contains raw-modifier-keys such as `ControlLeft` and `ShiftRight`.
+   * If `false`, modifier key flags are compared and the raw modifier keys in
+   * the history are ignored.
+   * @returns `true` if `other` have a superset mods and history of this input,
+   * otherwise `false`. The order are ignored. In other words, they are
+   * compared as sets.
+   */
+  isSubsetOf(other: KeyInput, rawMod = false): boolean {
+    if (!rawMod) {
+      for (const [mod] of modKeyCodeList)
+        if (this[`${mod}Key`] && !other[`${mod}Key`]) return false;
+    }
+    return this.history.isSubsetOf(other.history, { ignoreMod: !rawMod });
   }
 
   /**

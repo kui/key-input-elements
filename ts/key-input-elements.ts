@@ -1,5 +1,4 @@
 import { CodeHistory } from "./code-history.js";
-import { EventMatcher } from "./event-matcher.js";
 import { KeyInput } from "./key-input.js";
 import { isModKeyCode } from "./key-codes.js";
 
@@ -11,7 +10,6 @@ interface KeyInputMixin extends HTMLInputElement {
   rawMod: boolean;
   ignore: string | null;
   get ignoreRegExp(): RegExp | null;
-  buildMatcher(): EventMatcher;
 }
 
 export function mixinKeyInput(
@@ -100,11 +98,7 @@ export function mixinKeyInput(
         }
       }
     }
-
-    buildMatcher() {
-      return EventMatcher.parse(this.value);
-    }
-
+    
     private buildKeyEventString(keyboardEvent: KeyboardEvent) {
       if (!this.rawMod && isModKeyCode(keyboardEvent.code)) return null;
 

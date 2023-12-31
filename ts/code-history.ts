@@ -85,6 +85,17 @@ export class CodeHistory {
     }
   }
 
+  isSubsetOf(
+    other: CodeHistory,
+    { ignoreMod = false }: { ignoreMod: boolean },
+  ): boolean {
+    if (ignoreMod) {
+      return this.history.every((c) => !allModKeyCodes.has(c) && other.has(c));
+    } else {
+      return this.history.every((c) => other.has(c));
+    }
+  }
+
   copy() {
     return CodeHistory.fromCodes(this.history, "newerToOlder");
   }

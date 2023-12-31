@@ -1,10 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -eux
 
-get_version() {
-  python -c 'import json; print json.load(open("package.json"))["version"]'
-}
-
-TAG="v$(get_version)"
-
-git tag "$TAG" && git push --tags
+git tag "$(node -p 'require("./package.json").version')"

@@ -98,7 +98,7 @@ export function mixinKeyInput(
         }
       }
     }
-    
+
     private buildKeyEventString(keyboardEvent: KeyboardEvent) {
       if (!this.rawMod && isModKeyCode(keyboardEvent.code)) return null;
 

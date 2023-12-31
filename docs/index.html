@@ -72,31 +72,38 @@
 <h2>Matching KeyboardEvent</h2>
 
 <p>
-  <code>EventMatcher</code> is a class to match <code>KeyboardEvent</code> with
-  a provided pattern.
+  This package provide classes to match <code>KeyboardEvent</code>.
+</p>
+
+<h3>Match with the Latest KeyboardEvent: <code>KeyInputMatcher</code></h3>
+
+<p>
+  <code>KeyInputMatcher</code> is a class to match
+  the latest <code>KeyboardEvent</code> with a provided pattern.
 </p>
 
 <p>
-  Press any key in the following input element. The <code>EventMatcher</code> is
-  built with <code>Shift + KeyA + KeyS + KeyD</code>. The result of matching
-  with the input element is displayed in the following output elements. The
-  result is <code>true</code> if the input element matches with each condition.
+  Press any key in the following input element. The
+  <code>KeyInputMatcher</code> is built with
+  <code>Shift + KeyA + KeyS + KeyD</code>. The result of matching with the input
+  element is displayed in the following output elements. The result is
+  <code>true</code> if the input element matches with each condition.
 </p>
 
 <script type="module">
-  import { EventMatcher } from "./js/event-matcher/key-inputs.js";
+  import { KeyInputMatcher } from "./js/event-matchers/key-input.js";
   window.addEventListener("DOMContentLoaded", () => {
-    console.log("Setting up 'matching event' example");
+    console.log("Setting up 'key input matcher' example");
 
-    const matcher = EventMatcher.parse("Shift + KeyA + KeyS + KeyD");
+    const matcher = KeyInputMatcher.parse("Shift + KeyA + KeyS + KeyD");
 
-    keyinput.addEventListener("keydown", (e) => {
+    keyinput1.addEventListener("keydown", (e) => {
       const m = matcher.keydown(e);
       display1.value = m.match({ historySensitive: "ignore" });
       display2.value = m.match({ historySensitive: "orderInsensitive" });
       display3.value = m.match({ historySensitive: "orderSensitive" });
     });
-    keyinput.addEventListener("keyup", (e) => {
+    keyinput1.addEventListener("keyup", (e) => {
       matcher.keyup(e);
     });
   });
@@ -104,7 +111,7 @@
 
 <p>
   <code>key-input</code> element:
-  <input is="key-input" id="keyinput" multiple />
+  <input is="key-input" id="keyinput1" multiple />
 </p>
 
 <dl>
@@ -127,5 +134,59 @@
     Display <code>true</code> if you input <code>KeyD</code> with holding down
     any <code>Shift</code> keys, <code>KeyA</code> and <code>KeyS</code> with
     the order.
+  </dd>
+</dl>
+
+<h3>Match with Holding Keys: <code>KeyHoldMatcher</code></h3>
+
+<p>
+  <code>KeyHoldMatcher</code> is a class to match
+  the history of <code>KeyboardEvent</code> with a provided pattern.
+</p>
+
+<p>
+  Press any key in the following input element. The
+  <code>KeyHoldMatcher</code> is built with
+  <code>Shift + ShiftLeft + KeyA + KeyS</code>. The result of matching with the input
+  element is displayed in the following output elements. The result is
+  <code>true</code> if the input element matches with each condition.
+</p>
+
+<script type="module">
+  import { KeyHoldMatcher } from "./js/event-matchers/key-hold.js";
+  window.addEventListener("DOMContentLoaded", () => {
+    console.log("Setting up 'hold matcher' example");
+
+    const matcher = KeyHoldMatcher.parse("Shift + ShiftLeft + KeyA + KeyS");
+
+    keyinput2.addEventListener("keydown", (e) => {
+      const m = matcher.keydown(e);
+      display4.value = m.match();
+      display5.value = m.match({ rawMod: true });
+    });
+    keyinput2.addEventListener("keyup", (e) => {
+      const m = matcher.keyup(e);
+      display4.value = m.match();
+      display5.value = m.match({ rawMod: true });
+    });
+  });
+</script>
+
+<p>
+  <code>key-input</code> element:
+  <input is="key-input" id="keyinput2" multiple raw-mod />
+</p>
+
+<dl>
+  <dt><code>rawMod=false</code> (default)</dt>
+  <dd>
+    result= <output id="display4"></output><br />
+    Display <code>true</code> if you hold <code>KeyA + KeyS</code> with any <code>Shift</code> keys.
+  </dd>
+
+  <dt><code>rawMod=true</code></dt>
+  <dd>
+    result= <output id="display5"></output><br />
+    Display <code>true</code> if you hold <code>ShiftLeft + KeyA + KeyS</code>.
   </dd>
 </dl>

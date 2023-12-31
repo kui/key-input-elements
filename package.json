@@ -8,9 +8,13 @@
       "import": "./js/key-input-registerer.js",
       "types": "./types/key-input-registerer.d.ts"
     },
-    "./event-matcher": {
-      "import": "./js/event-matcher.js",
-      "types": "./types/event-matcher.d.ts"
+    "./event-matchers/key-hold": {
+      "import": "./js/event-matchers/key-hold.js",
+      "types": "./types/event-matchers/key-hold.d.ts"
+    },
+    "./event-matchers/key-input": {
+      "import": "./js/event-matchers/key-input.js",
+      "types": "./types/event-matchers/key-input.d.ts"
     }
   },
   "scripts": {

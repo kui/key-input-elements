@@ -90,7 +90,7 @@ export class CodeHistory {
     { ignoreMod = false }: { ignoreMod: boolean },
   ): boolean {
     if (ignoreMod) {
-      return this.history.every((c) => !allModKeyCodes.has(c) && other.has(c));
+      return this.history.every((c) => allModKeyCodes.has(c) || other.has(c));
     } else {
       return this.history.every((c) => other.has(c));
     }
